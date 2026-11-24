@@ -2,7 +2,7 @@
 	"name": "master",
 	"description": "Build a full-stack web application with Next.js.",
 	"cloudflare": {
-		"label": "Next.js Framework Starter",
+		"label": "Next.js Framework",
 		"products": [
 			"Workers"
 		],
@@ -12,6 +12,7 @@
 		"publish": true
 	},
 	"dependencies": {
+		"@phosphor-icons/react": "^2.1.10",
 		"@opennextjs/cloudflare": "1.14.0",
 		"next": "16.0.7",
 		"react": "19.2.1",
