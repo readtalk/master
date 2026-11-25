@@ -19,8 +19,8 @@ import {
   ThumbsUp,
 } from '@phosphor-icons/react'
 import { CollapsedSider, MobileSider, Sider } from '../components/sider/Sider'
-import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '../components/lib/chat-types'
-import { highlightCode } from '../components/CodeHighlight'
+import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from './chat-types'
+import { highlightCode } from './CodeHighlight'
 import './page.css'
 
 export default function Home() {
