@@ -1,28 +1,21 @@
 // src/components/sider/Sider.tsx
-// Skeleton only - Sider UI/UX v2.
-// Same structure / exports / props as v1: Sider, CollapsedSider, MobileSider, SessionItem.
-// Fixes:
-// - Phosphor everywhere, no emoji: PanelLeft (collapse), Plus (new chat),
-//   DotsThree (more), PencilSimple (rename), Trash (delete), GearSix (settings).
-// - App name: "Chat AI" -> "API usage demo" to match original screenshots.
-// - Collapsed pill: PanelLeft + Plus, like desktop collapsed state.
-// No engine: no zustand, no services, no i18n, no fetch, no persistence.
-// All data via props. All actions via callbacks. Dummy delete only closes modal.
+// Skeleton only - Sider UI/UX v2-fixed.
+// Fix from build log: PanelLeft DOES NOT EXIST in @phosphor-icons/react@2.1.10
+// -> replaced with List (already used in page.tsx, proven to build).
+// All other icons in this file passed the build: DotsThree, GearSix, PencilSimple, Plus, Trash.
+// No other logic changed from v1.
 'use client'
 
 import { useState } from 'react'
 import {
   DotsThree,
   GearSix,
-  PanelLeft,
+  List,
   PencilSimple,
   Plus,
   Trash,
 } from '@phosphor-icons/react'
 
-// ---------------------------------------------------------------------------
-// Types - minimal shape of SessionSummary for UI only.
-// ---------------------------------------------------------------------------
 export type SkeletonSession = {
   id: string
   title: string
@@ -40,10 +33,6 @@ export type SiderProps = {
   onCloseMobile?: () => void
 }
 
-// ---------------------------------------------------------------------------
-// Shared styles - tokens from theme.css, scoped to this skeleton file.
-// Mirrors Sider.module.css + SessionItem.module.css.
-// ---------------------------------------------------------------------------
 function SiderStyles() {
   return (
     <style>{`
@@ -95,10 +84,6 @@ function SiderStyles() {
   )
 }
 
-// ---------------------------------------------------------------------------
-// SessionItem - item + rename input + ... menu (Rename / Delete).
-// Rename is local UI state only, Delete calls onDelete to open parent modal.
-// ---------------------------------------------------------------------------
 export function SessionItem({
   session,
   active,
@@ -162,10 +147,6 @@ export function SessionItem({
   )
 }
 
-// ---------------------------------------------------------------------------
-// CollapsedSider - pill at top-left when sider is collapsed.
-// Two buttons: expand + new chat.
-// ---------------------------------------------------------------------------
 export function CollapsedSider({
   onExpand,
   onNewChat,
@@ -179,7 +160,7 @@ export function CollapsedSider({
       <div className="sk-collapsed">
         <div className="sk-collapsed-group">
           <button className="sk-icon-btn" title="Expand sidebar" onClick={onExpand}>
-            <PanelLeft size={20} />
+            <List size={20} />
           </button>
           <button className="sk-icon-btn" title="New chat" onClick={onNewChat}>
             <Plus size={20} />
@@ -190,10 +171,6 @@ export function CollapsedSider({
   )
 }
 
-// ---------------------------------------------------------------------------
-// Sider - expanded sidebar: name + collapse, new chat, grouped session list,
-// bottom settings, delete modal (UI only).
-// ---------------------------------------------------------------------------
 export function Sider({
   mobile = false,
   sessions,
@@ -214,7 +191,7 @@ export function Sider({
         <div className="sk-top">
           <div className="sk-app-name">API usage demo</div>
           <button className="sk-icon-btn" title="Collapse sidebar" onClick={() => (mobile ? onCloseMobile?.() : onCollapse?.())}>
-            <PanelLeft size={20} />
+            <List size={20} />
           </button>
         </div>
 
@@ -265,10 +242,6 @@ export function Sider({
   )
 }
 
-// ---------------------------------------------------------------------------
-// MobileSider - drawer: mask + drawer with Sider inside.
-// Render only when open.
-// ---------------------------------------------------------------------------
 export function MobileSider({
   open,
   sessions,
