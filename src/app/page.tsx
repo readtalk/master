@@ -12,7 +12,10 @@ import { highlightCode } from '../components/CodeHighlight'
 import './styles.css'
 
 export default function Home() {
-  const [isMobile, setIsMobile] = useState(false)
+  
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
   const [siderCollapsed, setSiderCollapsed] = useState(false)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [showSearch, setShowSearch] = useState(false)
@@ -35,7 +38,6 @@ export default function Home() {
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 768)
-    update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
@@ -112,7 +114,6 @@ export default function Home() {
     )
   }
 
-  // DESKTOP: TETAP KAYAK SEKARANG
   return (
     <>
       <div className={theme === 'dark' ? 'sk-frame sk-dark' : 'sk-frame'}>
@@ -140,11 +141,15 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          
           <div className="sk-content">
             {!hasMessages ? (
-              <div className="sk-column sk-wrap"><div className="sk-welcome"><h1 style={{ fontSize: 28, margin: 0, fontWeight: 600 }}>How can I help you?</h1></div></div>
+              <div className="sk-column sk-wrap sk-wrap-welcome">
+                <div className="sk-welcome"><h1 style={{ fontSize: 28, margin: 0, fontWeight: 600 }}>How can I help you?</h1></div>
+              </div>
             ) : (
-              <div className="sk-column sk-wrap">
+              <div className="sk-column sk-wrap sk-wrap-chat">
                 <div className="sk-bubble-user">{DUMMY_USER_MESSAGE}</div>
                 <div className="sk-ai">
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}><div className="sk-avatar">A</div></div>
@@ -169,6 +174,7 @@ export default function Home() {
               </div>
             )}
           </div>
+        
           <div className="sk-column sk-composer">
             <div className="sk-input-box">
               <textarea className="sk-input" rows={2} placeholder="Enter a message" value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }} />
