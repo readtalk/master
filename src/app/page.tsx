@@ -7,7 +7,6 @@ import {
   SpeakerHigh, ThumbsDown, ThumbsUp,
 } from '@phosphor-icons/react'
 import { Sidebar, MobileSidebar } from '../components/Sidebar'
-import FabAI from '../components/FabAI'
 import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '../components/lib/chat-types'
 import { highlightCode } from '../components/CodeHighlight'
 import './page.css'
@@ -95,7 +94,7 @@ export default function Home() {
   const phaseLabel = phase === 'thinking' ? 'Thinking...' : phase === 'streaming' ? 'Menulis...' : 'Selesai'
   const canSend = inputValue.trim().length > 0
 
-    if (isMobile && mobileView === 'list') {
+  if (isMobile && mobileView === 'list') {
     return (
       <>
         <MobileSidebar
@@ -108,7 +107,6 @@ export default function Home() {
           onOpenSettings={() => setShowSettings(true)}
           onCloseMobile={() => setMobileView('chat')}
         />
-        <FabAI><div style={{ padding: 16 }}>AI Panel</div></FabAI>
         {toast && <div className="sk-toast">{toast}</div>}
       </>
     )
@@ -119,11 +117,11 @@ export default function Home() {
     <>
       <div className={theme === 'dark' ? 'sk-frame sk-dark' : 'sk-frame'}>
         {!isMobile && !siderCollapsed && (
-  <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onCollapse={() => setSiderCollapsed(true)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
-)}
-{!isMobile && siderCollapsed && (
-  <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onExpand={() => setSiderCollapsed(false)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
-)}
+          <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onCollapse={() => setSiderCollapsed(true)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
+        )}
+        {!isMobile && siderCollapsed && (
+          <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onExpand={() => setSiderCollapsed(false)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
+        )}
         <main className="sk-main">
           <div className="sk-topbar">
             <button className="sk-icon-btn" onClick={() => (isMobile ? setMobileView('list') : setSiderCollapsed(!siderCollapsed))}><List size={22} /></button>
@@ -188,7 +186,6 @@ export default function Home() {
           </div>
         </main>
       </div>
-      <FabAI><div style={{ padding: 16 }}>AI Panel - isi chat AI di sini</div></FabAI>
       {showSearch && (<div className="sk-panel" onClick={() => setShowSearch(false)}><div className="sk-dialog" onClick={(e) => e.stopPropagation()}><h3 style={{ margin: '0 0 8px' }}>Search</h3><button className="sk-btn" onClick={() => setShowSearch(false)}>Tutup</button></div></div>)}
       {showSettings && (<div className="sk-panel" onClick={() => setShowSettings(false)}><div className="sk-dialog" onClick={(e) => e.stopPropagation()}><h3 style={{ margin: '0 0 8px' }}>Settings</h3><div style={{ display: 'flex', gap: 8 }}><button className="sk-btn" onClick={() => setTheme('light')}>Light</button><button className="sk-btn" onClick={() => setTheme('dark')}>Dark</button><button className="sk-btn" onClick={() => setShowSettings(false)}>Tutup</button></div></div></div>)}
       {toast && <div className="sk-toast">{toast}</div>}
