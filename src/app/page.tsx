@@ -1,3 +1,4 @@
+//
 // src/app/page.tsx
 // Skeleton only - Chat AI frame v4.2.
 // Based on v4 (same file, same Sider imports) + 3 patches:
