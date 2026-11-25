@@ -1,30 +1,36 @@
 // src/app/page.tsx
-// Skeleton only - Chat AI frame v4.
-// Fixes from original screenshots:
-// - Phosphor icons everywhere, no emoji: List, Plus, MagnifyingGlass, GearSix,
-//   Atom (DeepThink), Globe (Search), Microphone, Paperclip, ArrowUp.
-// - Session != message: New chat creates a session but stays on Welcome.
-//   Chat view only appears after first message is sent.
-// - Topbar hamburger is plain List icon, like original mobile screenshot.
+// Skeleton only - Chat AI frame v4.2.
+// Based on v4 (same file, same Sider imports) + 3 patches:
+// 1. Matrix header: mobile welcome = List only, mobile chat = List + "New chat" + PlusCircle,
+//    desktop chat = "New chat" title. No rewrite, no removed Sider imports.
+// 2. Code render: tiny highlighter (no new dep), pre = overflow-x auto like original,
+//    code head = ts + Copy + Download.
+// 3. AI ornaments: avatar "A" + action bar Copy / Retry / Like / Dislike / Speaker / Share on done.
 // No engine: no fetch, no SSE network, no API key, no store, no persistence.
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import {
+  ArrowCounterClockwise,
   ArrowUp,
   Atom,
+  Copy,
   GearSix,
   Globe,
   List,
   MagnifyingGlass,
   Microphone,
   Paperclip,
+  PlusCircle,
+  ShareNetwork,
+  SpeakerHigh,
+  ThumbsDown,
+  ThumbsUp,
 } from '@phosphor-icons/react'
 import { CollapsedSider, MobileSider, Sider } from '../components/sider/Sider'
 
 const DUMMY_USER_MESSAGE = 'Buatin tombol yang rapi buat Next.js'
-const DUMMY_AI_INTRO =
-  'Siap, ini tombol yang konsisten dan gampang dipakai. Copy aja lalu tempel di project kamu.'
+const DUMMY_AI_INTRO = 'Siap, ini tombol yang konsisten dan gampang dipakai. Copy aja lalu tempel di project kamu.'
 const DUMMY_AI_CODE = `export default function PrimaryButton() {
   return (
     <button className="primary-button">
@@ -32,10 +38,25 @@ const DUMMY_AI_CODE = `export default function PrimaryButton() {
     </button>
   )
 }`
-const DUMMY_AI_OUTRO =
-  'Tombol ini pakai satu gaya yang sama di semua halaman, jadi tampilan coding kamu tetap konsisten.'
+const DUMMY_AI_OUTRO = 'Tombol ini pakai satu gaya yang sama di semua halaman, jadi tampilan coding kamu tetap konsisten.'
 
 type Phase = 'thinking' | 'streaming' | 'done'
+
+// Tiny highlighter, no new dependency. Good enough to test code render.
+function highlightCode(code: string) {
+  const parts = code.split(/(\/\/.*|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`|\b(?:const|let|return|if|throw|new|async|await|function|export|default|import|from)\b|\b(?:string|number|boolean|Promise)\b)/g)
+  return parts.map((p, i) => {
+    if (/^(const|let|return|if|throw|new|async|await|function|export|default|import|from)$/.test(p))
+      return <span key={i} style={{ color: '#c678dd' }}>{p}</span>
+    if (p.startsWith("'") || p.startsWith('`') || p.startsWith('//'))
+      return <span key={i} style={{ color: '#98c379' }}>{p}</span>
+    if (/^(string|number|boolean|Promise)$/.test(p))
+      return <span key={i} style={{ color: '#61afef' }}>{p}</span>
+    if (/^(PrimaryButton|button)$/.test(p))
+      return <span key={i} style={{ color: '#e5c07b' }}>{p}</span>
+    return <span key={i}>{p}</span>
+  })
+}
 
 export default function Home() {
   const [isMobile, setIsMobile] = useState(false)
@@ -49,19 +70,16 @@ export default function Home() {
   const [searchEnabled, setSearchEnabled] = useState(false)
   const [inputValue, setInputValue] = useState('')
 
-  // Session list (sider) is separate from messages (main view).
-  // Like original: New chat appears in sider, but main stays on Welcome
-  // until the first message is sent.
   const [sessions, setSessions] = useState<{ id: string; title: string }[]>([])
   const [activeId, setActiveId] = useState('')
   const [hasMessages, setHasMessages] = useState(false)
-
   const [phase, setPhase] = useState<Phase>('thinking')
   const [streamedIntro, setStreamedIntro] = useState('')
   const [streamedCode, setStreamedCode] = useState('')
   const [streamedOutro, setStreamedOutro] = useState('')
   const [copied, setCopied] = useState(false)
   const timerRef = useRef<number | null>(null)
+
   const fullAiText = `${DUMMY_AI_INTRO}\n\n${DUMMY_AI_CODE}\n\n${DUMMY_AI_OUTRO}`
 
   useEffect(() => {
@@ -141,6 +159,17 @@ export default function Home() {
     window.setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleDownloadCode = () => {
+    const blob = new Blob([DUMMY_AI_CODE], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'PrimaryButton.tsx'
+    a.click()
+    URL.revokeObjectURL(url)
+    showToastMessage('Code diunduh')
+  }
+
   const phaseLabel = phase === 'thinking' ? 'Thinking...' : phase === 'streaming' ? 'Menulis...' : 'Selesai'
   const canSend = inputValue.trim().length > 0
 
@@ -171,8 +200,9 @@ export default function Home() {
         .sk-code { margin: 14px 0; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; background: #f9fafb; }
         .sk-dark .sk-code { background: #1b1b1d; border-color: rgba(255,255,255,0.1); }
         .sk-code-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; font-size: 12px; color: #6b7280; }
-        .sk-code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 13px; line-height: 22px; white-space: pre-wrap; word-break: break-word; }
+        .sk-code pre { margin: 0; padding: 14px; overflow-x: auto; font-family: Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 13px; line-height: 22px; white-space: pre; }
         .sk-cursor { display: inline-block; width: 8px; height: 16px; background: #3964fe; margin-left: 2px; vertical-align: -2px; animation: sk-blink 1s infinite; }
+        .sk-avatar { width: 36px; height: 36px; border-radius: 50%; background: #eef2ff; color: #3964fe; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
         .sk-composer { flex-shrink: 0; padding: 8px 0 14px; }
         .sk-input-box { border: 1px solid rgba(0,0,0,0.1); border-radius: 22px; padding: 12px 14px; background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
         .sk-dark .sk-input-box { background: #222224; border-color: rgba(255,255,255,0.1); }
@@ -195,14 +225,7 @@ export default function Home() {
 
       <div className={theme === 'dark' ? 'sk-frame sk-dark' : 'sk-frame'}>
         {!isMobile && !siderCollapsed && (
-          <Sider
-            sessions={sessions}
-            activeId={activeId}
-            onSelect={setActiveId}
-            onCollapse={() => setSiderCollapsed(true)}
-            onNewChat={handleNewChat}
-            onOpenSettings={() => setShowSettings(true)}
-          />
+          <Sider sessions={sessions} activeId={activeId} onSelect={setActiveId} onCollapse={() => setSiderCollapsed(true)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
         )}
 
         <main className="sk-main">
@@ -210,11 +233,18 @@ export default function Home() {
             <button className="sk-icon-btn" aria-label="Toggle sidebar" onClick={() => (isMobile ? setMobileSiderOpen(true) : setSiderCollapsed(!siderCollapsed))}>
               <List size={22} />
             </button>
-            {isMobile && <strong>API usage demo</strong>}
-            {isMobile && (
+            {isMobile && !hasMessages && <strong>API usage demo</strong>}
+            {isMobile && hasMessages && <strong>New chat</strong>}
+            {!isMobile && hasMessages && <strong style={{ fontSize: 15, fontWeight: 500 }}>New chat</strong>}
+            {isMobile && !hasMessages && (
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
                 <button className="sk-icon-btn" aria-label="Search" onClick={() => setShowSearch(true)}><MagnifyingGlass size={20} /></button>
                 <button className="sk-icon-btn" aria-label="Settings" onClick={() => setShowSettings(true)}><GearSix size={20} /></button>
+              </div>
+            )}
+            {isMobile && hasMessages && (
+              <div style={{ marginLeft: 'auto' }}>
+                <button className="sk-icon-btn" aria-label="New chat" onClick={handleNewChat}><PlusCircle size={26} /></button>
               </div>
             )}
           </div>
@@ -233,6 +263,9 @@ export default function Home() {
               <div className="sk-column sk-wrap">
                 <div className="sk-bubble-user">{DUMMY_USER_MESSAGE}</div>
                 <div className="sk-ai">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className="sk-avatar">A</div>
+                  </div>
                   <div className="sk-status">
                     {phase !== 'done' && <span className="sk-dot" />}
                     <span>{phaseLabel}</span>
@@ -244,13 +277,26 @@ export default function Home() {
                     <div className="sk-code">
                       <div className="sk-code-head">
                         <span>tsx</span>
-                        <button className="sk-btn" onClick={handleCopyCode}>{copied ? 'Copied' : 'Copy'}</button>
+                        <span style={{ display: 'flex', gap: 8 }}>
+                          <button className="sk-btn" onClick={handleCopyCode}>{copied ? 'Copied' : 'Copy'}</button>
+                          <button className="sk-btn" onClick={handleDownloadCode}>Download</button>
+                        </span>
                       </div>
-                      <pre>{streamedCode}</pre>
+                      <pre>{highlightCode(streamedCode)}</pre>
                     </div>
                   )}
                   {streamedOutro && <p style={{ margin: '8px 0 0' }}>{streamedOutro}</p>}
                   {phase === 'streaming' && <span className="sk-cursor" />}
+                  {phase === 'done' && (
+                    <div style={{ display: 'flex', gap: 4, marginTop: 12, color: '#9ca3af' }}>
+                      <button className="sk-icon-btn" title="Copy" onClick={handleCopyCode}><Copy size={16} /></button>
+                      <button className="sk-icon-btn" title="Retry" onClick={() => showToastMessage('Kerangka saja - retry belum nyambung')}><ArrowCounterClockwise size={16} /></button>
+                      <button className="sk-icon-btn" title="Like" onClick={() => showToastMessage('Kerangka saja - like belum nyambung')}><ThumbsUp size={16} /></button>
+                      <button className="sk-icon-btn" title="Dislike" onClick={() => showToastMessage('Kerangka saja - dislike belum nyambung')}><ThumbsDown size={16} /></button>
+                      <button className="sk-icon-btn" title="Speaker" onClick={() => showToastMessage('Kerangka saja - speaker belum nyambung')}><SpeakerHigh size={16} /></button>
+                      <button className="sk-icon-btn" title="Share" onClick={() => showToastMessage('Kerangka saja - share belum nyambung')}><ShareNetwork size={16} /></button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -286,15 +332,7 @@ export default function Home() {
           </div>
         </main>
 
-        <MobileSider
-          open={isMobile && mobileSiderOpen}
-          sessions={sessions}
-          activeId={activeId}
-          onSelect={(id) => { setActiveId(id); setMobileSiderOpen(false) }}
-          onNewChat={handleNewChat}
-          onOpenSettings={() => setShowSettings(true)}
-          onCloseMobile={() => setMobileSiderOpen(false)}
-        />
+        <MobileSider open={isMobile && mobileSiderOpen} sessions={sessions} activeId={activeId} onSelect={(id) => { setActiveId(id); setMobileSiderOpen(false) }} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} onCloseMobile={() => setMobileSiderOpen(false)} />
       </div>
 
       {showSearch && (
