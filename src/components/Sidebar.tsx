@@ -31,7 +31,7 @@ function SidebarStyles() {
   return (
     <style>{`
       .sk-sider { display: flex; flex-direction: column; flex-shrink: 0; box-sizing: border-box; width: 261px; height: 100%; padding: 6px 12px 0; border-right: 1px solid var(--dsw-alias-border-l1, rgba(0,0,0,0.04)); background-color: var(--dsw-specific-sidebar-fill, #f9fafb); }
-      .sk-sider-mobile { width: 300px; max-width: calc(100vw - 48px); }
+      .sk-sider-mobile { width: 100vw; max-width: 100vw; height: 100dvh; border-right: none; }
       .sk-sider-mobile .sk-list-wrap { margin-top: 16px; }
       .sk-sider-mobile .sk-section-header { padding: 4px 10px 3px; font-size: 14px; line-height: 22px; }
       .sk-sider-mobile .sk-bottom { height: auto; padding: 12px 0; }
@@ -55,7 +55,8 @@ function SidebarStyles() {
       .sk-collapsed { position: absolute; top: 0; left: 0; z-index: 20; display: flex; align-items: center; gap: 16px; margin: 12px 0 0 16px; }
       .sk-collapsed-group { display: flex; align-items: center; gap: 2px; height: 40px; padding: 0 2px; box-sizing: border-box; border-radius: 100px; border: 1px solid var(--dsw-alias-border-l2, rgba(0,0,0,0.1)); background: var(--dsw-alias-bg-layer-3, #fff); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
       .sk-drawer-mask { position: absolute; inset: 0; z-index: 799; background: rgba(0,0,0,0.35); }
-      .sk-drawer { position: absolute; top: 0; bottom: 0; left: 0; z-index: 800; }
+      .sk-drawer { position: absolute; top: 0; bottom: 0; left: 0; z-index: 800; width: 100vw; height: 100dvh; }
+      .sk-drawer-full { position: relative; z-index: 1; width: 100vw; height: 100dvh; }
       .sk-item { position: relative; display: flex; align-items: center; box-sizing: border-box; height: 40px; padding: 6px 6px 6px 10px; border-radius: 12px; font-size: 14px; line-height: 22px; color: var(--dsw-alias-label-primary, #111); cursor: pointer; }
       .sk-item-active { background-color: var(--dsw-specific-sidebar-nav-item-active-accent, #e4edfd); color: var(--dsw-alias-brand-primary-invert, #3964fe); }
       .sk-item:hover { background-color: var(--dsw-specific-sidebar-nav-item-hover, rgba(0,0,0,0.04)); }
@@ -244,6 +245,7 @@ export function MobileSidebar({
   onNewChat,
   onOpenSettings,
   onCloseMobile,
+  fullscreen = false,
 }: {
   open: boolean
   sessions: Session[]
@@ -252,8 +254,24 @@ export function MobileSidebar({
   onNewChat?: () => void
   onOpenSettings?: () => void
   onCloseMobile?: () => void
+  fullscreen?: boolean
 }) {
   if (!open) return null
+  if (fullscreen) {
+    return (
+      <div className="sk-drawer-full">
+        <Sidebar
+          mobile
+          sessions={sessions}
+          activeId={activeId}
+          onSelect={onSelect}
+          onNewChat={onNewChat}
+          onOpenSettings={onOpenSettings}
+          onCloseMobile={onCloseMobile}
+        />
+      </div>
+    )
+  }
   return (
     <>
       <div className="sk-drawer-mask" onClick={onCloseMobile} />
