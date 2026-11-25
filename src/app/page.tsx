@@ -1,12 +1,3 @@
-// src/app/page.tsx
-// Skeleton only - Chat AI frame v4.2.
-// Based on v4 (same file, same Sider imports) + 3 patches:
-// 1. Matrix header: mobile welcome = List only, mobile chat = List + "New chat" + PlusCircle,
-//    desktop chat = "New chat" title. No rewrite, no removed Sider imports.
-// 2. Code render: tiny highlighter (no new dep), pre = overflow-x auto like original,
-//    code head = ts + Copy + Download.
-// 3. AI ornaments: avatar "A" + action bar Copy / Retry / Like / Dislike / Speaker / Share on done.
-// No engine: no fetch, no SSE network, no API key, no store, no persistence.
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -27,9 +18,9 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from '@phosphor-icons/react'
-import { CollapsedSider, MobileSider, Sider } from '@components/sider/Sider'
-import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '@components/chat-types'
-import { highlightCode } from '@components/CodeHighlight'
+import { CollapsedSider, MobileSider, Sider } from '@/components/sider/Sider'
+import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '@/components/chat-types'
+import { highlightCode } from '@/components/CodeHighlight'
 import './page.css'
 
 export default function Home() {
