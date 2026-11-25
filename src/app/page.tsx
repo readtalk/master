@@ -118,12 +118,12 @@ export default function Home() {
   return (
     <>
       <div className={theme === 'dark' ? 'sk-frame sk-dark' : 'sk-frame'}>
-        {!siderCollapsed && (
-          <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onCollapse={() => setSiderCollapsed(true)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
-        )}
-        {siderCollapsed && (
-          <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onExpand={() => setSiderCollapsed(false)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
-        )}
+        {!isMobile && !siderCollapsed && (
+  <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onCollapse={() => setSiderCollapsed(true)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
+)}
+{!isMobile && siderCollapsed && (
+  <Sidebar mobile={false} sessions={sessions} activeId={activeId} onSelect={setActiveId} onExpand={() => setSiderCollapsed(false)} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} />
+)}
         <main className="sk-main">
           <div className="sk-topbar">
             <button className="sk-icon-btn" onClick={() => (isMobile ? setMobileView('list') : setSiderCollapsed(!siderCollapsed))}><List size={22} /></button>
