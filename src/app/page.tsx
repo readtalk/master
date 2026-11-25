@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client'
 import { useEffect, useState } from 'react'
-import { Sidebar, CollapsedSidebar, MobileSidebar } from '@/components/Sidebar'
+import { Sidebar, CollapsedSidebar, MobileSidebar } from '@/components/sider/Sider'
 
 export default function Home() {
   const [collapsed, setCollapsed] = useState(false)
