@@ -15,8 +15,8 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
-},
-"vars": {
-  "NODE_ENV": "production"
+	"upload_source_maps": true,
+	"vars": {
+		"NODE_ENV": "production"
+	}
 }
