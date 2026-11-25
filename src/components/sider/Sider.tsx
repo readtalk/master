@@ -1,11 +1,24 @@
 // src/components/sider/Sider.tsx
-// Skeleton only - Sider UI/UX.
-// Follows Sider.tsx + CollapsedSider.tsx + SessionItem.tsx + Sider.module.css + SessionItem.module.css.
+// Skeleton only - Sider UI/UX v2.
+// Same structure / exports / props as v1: Sider, CollapsedSider, MobileSider, SessionItem.
+// Fixes:
+// - Phosphor everywhere, no emoji: PanelLeft (collapse), Plus (new chat),
+//   DotsThree (more), PencilSimple (rename), Trash (delete), GearSix (settings).
+// - App name: "Chat AI" -> "API usage demo" to match original screenshots.
+// - Collapsed pill: PanelLeft + Plus, like desktop collapsed state.
 // No engine: no zustand, no services, no i18n, no fetch, no persistence.
 // All data via props. All actions via callbacks. Dummy delete only closes modal.
 'use client'
 
 import { useState } from 'react'
+import {
+  DotsThree,
+  GearSix,
+  PanelLeft,
+  PencilSimple,
+  Plus,
+  Trash,
+} from '@phosphor-icons/react'
 
 // ---------------------------------------------------------------------------
 // Types - minimal shape of SessionSummary for UI only.
@@ -73,7 +86,7 @@ function SiderStyles() {
       .sk-btn-danger { background: #ec1313; color: #fff; border-color: #ec1313; }
       .sk-menu { position: relative; }
       .sk-menu-pop { position: absolute; right: 0; top: 32px; z-index: 50; min-width: 140px; background: #fff; color: #111; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 6px; display: flex; flex-direction: column; }
-      .sk-menu-item { border: none; background: transparent; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: inherit; }
+      .sk-menu-item { display: flex; align-items: center; gap: 8px; border: none; background: transparent; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: inherit; }
       .sk-menu-item:hover { background: rgba(0,0,0,0.05); }
       .sk-menu-item-danger { color: #ec1313; }
       @media (hover: none) { .sk-item-action { display: flex; } }
@@ -126,39 +139,20 @@ export function SessionItem({
   }
 
   return (
-    <div
-      className={active ? 'sk-item sk-item-active' : 'sk-item'}
-      onClick={onSelect}
-    >
+    <div className={active ? 'sk-item sk-item-active' : 'sk-item'} onClick={onSelect}>
       <div className="sk-item-title">{displayTitle}</div>
       <div className="sk-item-action" onClick={(e) => e.stopPropagation()}>
         <div className="sk-menu">
-          <button
-            className="sk-icon-btn"
-            aria-label="More"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            ⋯
+          <button className="sk-icon-btn" aria-label="More" onClick={() => setMenuOpen(!menuOpen)}>
+            <DotsThree size={20} weight="bold" />
           </button>
           {menuOpen && (
             <div className="sk-menu-pop">
-              <button
-                className="sk-menu-item"
-                onClick={() => {
-                  setMenuOpen(false)
-                  setEditing(true)
-                }}
-              >
-                ✎ Rename
+              <button className="sk-menu-item" onClick={() => { setMenuOpen(false); setEditing(true) }}>
+                <PencilSimple size={16} /> Rename
               </button>
-              <button
-                className="sk-menu-item sk-menu-item-danger"
-                onClick={() => {
-                  setMenuOpen(false)
-                  onDelete?.()
-                }}
-              >
-                🗑 Delete
+              <button className="sk-menu-item sk-menu-item-danger" onClick={() => { setMenuOpen(false); onDelete?.() }}>
+                <Trash size={16} /> Delete
               </button>
             </div>
           )}
@@ -185,10 +179,10 @@ export function CollapsedSider({
       <div className="sk-collapsed">
         <div className="sk-collapsed-group">
           <button className="sk-icon-btn" title="Expand sidebar" onClick={onExpand}>
-            ☰
+            <PanelLeft size={20} />
           </button>
           <button className="sk-icon-btn" title="New chat" onClick={onNewChat}>
-            ＋
+            <Plus size={20} />
           </button>
         </div>
       </div>
@@ -218,26 +212,14 @@ export function Sider({
       <SiderStyles />
       <div className={mobile ? 'sk-sider sk-sider-mobile' : 'sk-sider'}>
         <div className="sk-top">
-          <div className="sk-app-name">Chat AI</div>
-          <button
-            className="sk-icon-btn"
-            title="Collapse sidebar"
-            onClick={() => (mobile ? onCloseMobile?.() : onCollapse?.())}
-          >
-            ☰
+          <div className="sk-app-name">API usage demo</div>
+          <button className="sk-icon-btn" title="Collapse sidebar" onClick={() => (mobile ? onCloseMobile?.() : onCollapse?.())}>
+            <PanelLeft size={20} />
           </button>
         </div>
 
-        <button
-          type="button"
-          className="sk-new-chat"
-          onClick={() => {
-            onNewChat?.()
-            onCloseMobile?.()
-          }}
-        >
-          <span className="sk-new-chat-icon">＋</span>
-          New chat
+        <button type="button" className="sk-new-chat" onClick={() => { onNewChat?.(); onCloseMobile?.() }}>
+          <span className="sk-new-chat-icon"><Plus size={18} /></span> New chat
         </button>
 
         <div className="sk-list-wrap">
@@ -249,10 +231,7 @@ export function Sider({
                   key={session.id}
                   session={session}
                   active={session.id === activeId}
-                  onSelect={() => {
-                    onSelect?.(session.id)
-                    onCloseMobile?.()
-                  }}
+                  onSelect={() => { onSelect?.(session.id); onCloseMobile?.() }}
                   onDelete={() => setDeleting(session)}
                 />
               ))}
@@ -262,44 +241,21 @@ export function Sider({
 
         <div className="sk-bottom">
           <button type="button" className="sk-settings" onClick={onOpenSettings}>
-            <span className="sk-settings-icon">⚙</span>
+            <span className="sk-settings-icon"><GearSix size={20} /></span>
             <span className="sk-settings-label">Settings</span>
           </button>
         </div>
 
         {deleting ? (
-          <div
-            className="sk-modal-mask"
-            onClick={() => {
-              if (!deletePending) setDeleting(null)
-            }}
-          >
+          <div className="sk-modal-mask" onClick={() => { if (!deletePending) setDeleting(null) }}>
             <div className="sk-modal" onClick={(e) => e.stopPropagation()}>
               <h3 style={{ margin: '0 0 8px' }}>Delete session?</h3>
               <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 16px' }}>
                 This will delete “{deleting.title}” and its files. Skeleton only — nothing is really deleted.
               </p>
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button
-                  className="sk-btn"
-                  disabled={deletePending}
-                  onClick={() => setDeleting(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="sk-btn sk-btn-danger"
-                  disabled={deletePending}
-                  onClick={() => {
-                    setDeletePending(true)
-                    window.setTimeout(() => {
-                      setDeletePending(false)
-                      setDeleting(null)
-                    }, 400)
-                  }}
-                >
-                  Delete
-                </button>
+                <button className="sk-btn" disabled={deletePending} onClick={() => setDeleting(null)}>Cancel</button>
+                <button className="sk-btn sk-btn-danger" disabled={deletePending} onClick={() => { setDeletePending(true); window.setTimeout(() => { setDeletePending(false); setDeleting(null) }, 400) }}>Delete</button>
               </div>
             </div>
           </div>
