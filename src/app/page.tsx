@@ -95,14 +95,20 @@ export default function Home() {
   const phaseLabel = phase === 'thinking' ? 'Thinking...' : phase === 'streaming' ? 'Menulis...' : 'Selesai'
   const canSend = inputValue.trim().length > 0
 
-  // HP: SIDEBAR FIRST + FabAI
-  if (isMobile && mobileView === 'list') {
+    if (isMobile && mobileView === 'list') {
     return (
       <>
-        <div className={theme === 'dark' ? 'sk-frame sk-dark' : 'sk-frame'}>
-          <Sidebar mobile={true} sessions={sessions} activeId={activeId} onSelect={handleSelect} onNewChat={handleNewChat} onOpenSettings={() => setShowSettings(true)} onCloseMobile={() => {}} />
-        </div>
-        <FabAI><div style={{ padding: 16 }}>AI Panel - isi chat AI di sini</div></FabAI>
+        <MobileSidebar
+          open={true}
+          fullscreen={true}
+          sessions={sessions}
+          activeId={activeId}
+          onSelect={handleSelect}
+          onNewChat={handleNewChat}
+          onOpenSettings={() => setShowSettings(true)}
+          onCloseMobile={() => setMobileView('chat')}
+        />
+        <FabAI><div style={{ padding: 16 }}>AI Panel</div></FabAI>
         {toast && <div className="sk-toast">{toast}</div>}
       </>
     )
