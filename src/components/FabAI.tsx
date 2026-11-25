@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import { Sparkle, X } from '@phosphor-icons/react'
 
-export default function ChatFab({ children }: { children: React.ReactNode }) {
+export default function FabAI({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
 
   return (
     <>
       <button
         onClick={() => setOpen(!open)}
-        aria-label="Open AI Chat"
+        aria-label="OpenAI"
         style={{
           position: 'fixed',
           right: 16,
