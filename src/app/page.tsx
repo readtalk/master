@@ -6,7 +6,7 @@ import {
   MagnifyingGlass, Microphone, Paperclip, PlusCircle, ShareNetwork,
   SpeakerHigh, ThumbsDown, ThumbsUp,
 } from '@phosphor-icons/react'
-import { Sidebar } from '../components/Sidebar'
+import { Sidebar, MobileSidebar } from '../components/Sidebar'
 import FabAI from '../components/FabAI'
 import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '../components/lib/chat-types'
 import { highlightCode } from '../components/CodeHighlight'
