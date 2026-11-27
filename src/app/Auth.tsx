@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 export type UserProfile = {
@@ -36,7 +36,7 @@ function AuthStyles() {
   )
 }
 
-export default function Auth() {
+function AuthInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null)
@@ -191,5 +191,13 @@ export default function Auth() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function Auth() {
+  return (
+    <Suspense fallback={null}>
+      <AuthInner />
+    </Suspense>
   )
 }
