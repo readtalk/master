@@ -45,7 +45,7 @@ export default function RootLayout({
         style={{ margin: 0 }}
       >
         <PwaRegister />
-        {/* INI SATU-SATUNYA YANG DITAMBAH */}
+        
         <div
           style={{
             display: "flex",
