@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import PopAuth from "@/components/PopAuth";
+import ServiceWorkers from "@/components/ServiceWorkers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,7 +47,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{ margin: 0, background: "#000000", color: "#ffffff" }}
       >
-        <PopAuth />
+        <ServiceWorkers />
         <div
           style={{
             display: "flex",
