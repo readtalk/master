@@ -50,7 +50,6 @@ export default function Auth() {
   const [formLocation, setFormLocation] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  // 1. gate: jangan jalan di /@, /u/, /callback
   useEffect(() => {
     if (pathname.startsWith('/@') || pathname.startsWith('/u/') || pathname === '/callback') {
       setIsVisible(false)
@@ -62,7 +61,6 @@ export default function Auth() {
     setIsVisible(true)
   }, [pathname, searchParams])
 
-  // 2. ambil profil kalo udah login
   useEffect(() => {
     if (!isLoggedIn) return
     const session = localStorage.getItem('session')
@@ -142,7 +140,6 @@ export default function Auth() {
     )
   }
 
-  // 3. udah login + profil lengkap -> Auth ngilang, Sidebar jalan
   if (isLoggedIn) {
     if (profile && (!profile.username || !profile.yourname || !profile.date_of_birth || !profile.location)) {
       return (
@@ -179,7 +176,6 @@ export default function Auth() {
     return null
   }
 
-  // 4. belum login -> 1 modal Sidebar-style doang, bukan 2 layar PwaPopup
   return (
     <>
       <AuthStyles />
