@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "READTalk-Demo",
   },
 };
@@ -39,18 +39,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ background: "#000000" }}>
+      <head>
+        <style>{`html,body{background:#000000 !important;margin:0;padding:0;}`}</style>
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ margin: 0 }}
+        style={{ margin: 0, background: "#000000", color: "#ffffff" }}
       >
         <PopAuth />
-        
         <div
           style={{
             display: "flex",
             height: "100dvh",
             overflow: "hidden",
+            background: "#000000",
           }}
         >
           {children}
