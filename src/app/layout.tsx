@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ServiceWorkers from "@/components/ServiceWorkers";
+import Auth from "@/components/Auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "READTalk- Demo",
-  description: "ReadTalk - Demo",
+  title: "READTalk-Demo",
+  description: "READTalk - Demo",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -48,6 +49,7 @@ export default function RootLayout({
         style={{ margin: 0, background: "#000000", color: "#ffffff" }}
       >
         <ServiceWorkers />
+        <Auth />
         <div
           style={{
             display: "flex",
