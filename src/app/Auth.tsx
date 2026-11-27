@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
+const AUTH_URL = 'https://auth.readtalk.web.id'
+
 export type UserProfile = {
   username: string | null
   yourname: string | null
@@ -55,9 +57,18 @@ function AuthInner() {
       setIsVisible(false)
       return
     }
+
+    // FIX: token dari URL langsung disimpen, terus URL dibersihin
+    const tokenInUrl = searchParams.get('token')
+    if (tokenInUrl) {
+      localStorage.setItem('session', tokenInUrl)
+      const url = new URL(window.location.href)
+      url.searchParams.delete('token')
+      window.history.replaceState({}, '', url.toString())
+    }
+
     const session = localStorage.getItem('session')
-    const hasTokenInUrl = searchParams.get('token')
-    setIsLoggedIn(!!(hasTokenInUrl || session))
+    setIsLoggedIn(!!session)
     setIsVisible(true)
   }, [pathname, searchParams])
 
@@ -66,12 +77,21 @@ function AuthInner() {
     const session = localStorage.getItem('session')
     if (!session) return
     setIsProfileLoading(true)
-    fetch('https://auth.readtalk.workers.dev/settings', {
+    // FIX: domain disamain sama backend baru lu
+    fetch(`${AUTH_URL}/settings`, {
       headers: { Authorization: `Bearer ${session}` },
     })
-      .then((res) => res.json() as Promise<{ success: boolean; user?: UserProfile }>)
+      .then(async (res) => {
+        // FIX: kalo 401, token mati -> hapus session, balik ke login
+        if (res.status === 401) {
+          localStorage.removeItem('session')
+          setIsLoggedIn(false)
+          return null
+        }
+        return (await res.json()) as { success: boolean; user?: UserProfile }
+      })
       .then((data) => {
-        if (data.success && data.user) {
+        if (data?.success && data.user) {
           setProfile(data.user)
           setFormUsername(data.user.username || '')
           setFormYourname(data.user.yourname || '')
@@ -96,7 +116,7 @@ function AuthInner() {
     if (!session) return
     setIsSaving(true)
     try {
-      const res = await fetch('https://auth.readtalk.workers.dev/settings', {
+      const res = await fetch(`${AUTH_URL}/settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
