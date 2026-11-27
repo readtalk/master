@@ -47,6 +47,46 @@ type AuthTestState = {
 const TOKEN_KEY = 'sidebar_token'
 const TOKEN_KEY_2 = 'token'
 
+// --- dibaca SINCRON pas pertama render, bukan di useEffect ---
+function readTokenSync(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('token')
+    if (fromUrl) return fromUrl
+  } catch {}
+  try { return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2) || sessionStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY_2) } catch { return null }
+}
+
+function parseUser(token: string | null): AuthTestUser | null {
+  if (!token) return null
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const id = payload.properties?.id || payload.sub || payload.id || ''
+    const username = payload.properties?.username || payload.username || ''
+    const yourname = payload.properties?.yourname || payload.yourname || username || ''
+    if (id || username) return { id: String(id), username, yourname }
+  } catch {}
+  return null
+}
+
+function getInitialAuth(): AuthTestState {
+  const token = readTokenSync()
+  // kalo token masih di URL, langsung simpen biar gak ilang pas render berikutnya
+  if (token && typeof window !== 'undefined') {
+    try {
+      if (new URLSearchParams(window.location.search).get('token')) {
+        localStorage.setItem(TOKEN_KEY, token)
+        localStorage.setItem(TOKEN_KEY_2, token)
+        sessionStorage.setItem(TOKEN_KEY, token)
+        sessionStorage.setItem(TOKEN_KEY_2, token)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    } catch {}
+  }
+  const loggedIn = Boolean(token)
+  return { loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString() }
+}
+
 function SidebarStyles() {
   return (
     <style>{`
@@ -208,50 +248,37 @@ export function Sidebar({
   const [showList, setShowList] = useState(false)
   const [mobileTab, setMobileTab] = useState('chats')
   const [showAuthTest, setShowAuthTest] = useState(false)
-  const [auth, setAuth] = useState<AuthTestState>({ loading: true, loggedIn: false, hasSession: false, code: null, user: null, lastChecked: '-' })
+  // langsung LOGIN dari render pertama, gak nunggu useEffect
+  const [auth, setAuth] = useState<AuthTestState>(() => getInitialAuth())
 
   const refreshAuth = useCallback(() => {
-    setAuth((p) => ({ ...p, loading: true }))
-    try {
-      const params = new URLSearchParams(window.location.search)
-      const tokenFromUrl = params.get('token')
-      if (tokenFromUrl) {
-        try {
-          localStorage.setItem(TOKEN_KEY, tokenFromUrl)
-          localStorage.setItem(TOKEN_KEY_2, tokenFromUrl)
-          sessionStorage.setItem(TOKEN_KEY, tokenFromUrl)
-          sessionStorage.setItem(TOKEN_KEY_2, tokenFromUrl)
-        } catch {}
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-      const savedToken =
-        (() => { try { return localStorage.getItem(TOKEN_KEY) } catch { return null } })() ||
-        (() => { try { return localStorage.getItem(TOKEN_KEY_2) } catch { return null } })() ||
-        (() => { try { return sessionStorage.getItem(TOKEN_KEY) } catch { return null } })() ||
-        (() => { try { return sessionStorage.getItem(TOKEN_KEY_2) } catch { return null } })()
-      const loggedIn = Boolean(savedToken)
-      let user: AuthTestUser | null = null
-      if (savedToken) {
-        try {
-          const payload = JSON.parse(atob(savedToken.split('.')[1]))
-          const id = payload.properties?.id || payload.sub || payload.id || ''
-          const username = payload.properties?.username || payload.username || ''
-          const yourname = payload.properties?.yourname || payload.yourname || username || ''
-          if (id || username) user = { id: String(id), username, yourname }
-        } catch {}
-      }
-      setAuth({ loading: false, loggedIn, hasSession: loggedIn, code: savedToken, user, lastChecked: new Date().toLocaleTimeString() })
-    } catch {
-      const savedToken = (() => { try { return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2) } catch { return null } })()
-      setAuth({ loading: false, loggedIn: Boolean(savedToken), hasSession: Boolean(savedToken), code: savedToken, user: null, lastChecked: new Date().toLocaleTimeString() })
+    const token = readTokenSync()
+    if (token && typeof window !== 'undefined') {
+      try {
+        const fromUrl = new URLSearchParams(window.location.search).get('token')
+        if (fromUrl) {
+          localStorage.setItem(TOKEN_KEY, token)
+          localStorage.setItem(TOKEN_KEY_2, token)
+          sessionStorage.setItem(TOKEN_KEY, token)
+          sessionStorage.setItem(TOKEN_KEY_2, token)
+          window.history.replaceState({}, '', window.location.pathname)
+        }
+      } catch {}
     }
+    const loggedIn = Boolean(token)
+    setAuth({ loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString() })
   }, [])
 
   useEffect(() => {
     refreshAuth()
     const onChanged = () => refreshAuth()
+    const onStorage = () => refreshAuth()
     window.addEventListener('session-changed', onChanged)
-    return () => window.removeEventListener('session-changed', onChanged)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('session-changed', onChanged)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [refreshAuth])
 
   const handleLogout = () => {
