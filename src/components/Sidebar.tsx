@@ -11,11 +11,7 @@ import {
   Trash,
 } from '@phosphor-icons/react'
 
-export type Session = {
-  id: string
-  title: string
-}
-
+export type Session = { id: string; title: string }
 export type SidebarProps = {
   mobile?: boolean
   sessions: Session[]
@@ -28,13 +24,7 @@ export type SidebarProps = {
   onCloseMobile?: () => void
 }
 
-type AuthTestUser = {
-  id: string
-  username?: string
-  yourname?: string
-  avatar?: string | null
-}
-
+type AuthTestUser = { id: string; username?: string; yourname?: string; avatar?: string | null }
 type AuthTestState = {
   loading: boolean
   loggedIn: boolean
@@ -42,6 +32,7 @@ type AuthTestState = {
   code: string | null
   user: AuthTestUser | null
   lastChecked: string
+  source: string
 }
 
 const TOKEN_KEY = 'sidebar_token'
@@ -55,30 +46,30 @@ function getCookie(name: string): string | null {
     return m ? decodeURIComponent(m[1]) : null
   } catch { return null }
 }
-
 function setCookie(name: string, value: string) {
   if (typeof document === 'undefined') return
-  try {
-    // 30 hari, kebawa ke semua path, tahan reload + close PWA
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; SameSite=Lax`
-  } catch {}
+  try { document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; SameSite=Lax` } catch {}
 }
-
 function deleteCookie(name: string) {
   if (typeof document === 'undefined') return
   try { document.cookie = `${name}=; path=/; max-age=0` } catch {}
 }
 
-function readTokenSync(): string | null {
-  if (typeof window === 'undefined') return null
+function readTokenSync(): { token: string | null; source: string } {
+  if (typeof window === 'undefined') return { token: null, source: 'SSR' }
   try {
     const fromUrl = new URLSearchParams(window.location.search).get('token')
-    if (fromUrl) return fromUrl
+    if (fromUrl) return { token: fromUrl, source: 'URL ?token=' }
   } catch {}
-  // cookie dulu, baru localStorage. kalo localStorage dihapus orang, cookie masih ada.
   const fromCookie = getCookie(COOKIE_KEY) || getCookie(TOKEN_KEY) || getCookie(TOKEN_KEY_2)
-  if (fromCookie) return fromCookie
-  try { return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2) || sessionStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY_2) } catch { return null }
+  if (fromCookie) return { token: fromCookie, source: 'COOKIE' }
+  try {
+    const ls = localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2)
+    if (ls) return { token: ls, source: 'LOCALSTORAGE' }
+    const ss = sessionStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY_2)
+    if (ss) return { token: ss, source: 'SESSIONSTORAGE' }
+  } catch {}
+  return { token: null, source: 'KOSONG - semua tempat kosong' }
 }
 
 function saveTokenEverywhere(token: string) {
@@ -106,7 +97,7 @@ function parseUser(token: string | null): AuthTestUser | null {
 }
 
 function getInitialAuth(): AuthTestState {
-  const token = readTokenSync()
+  const { token, source } = readTokenSync()
   if (token && typeof window !== 'undefined') {
     try {
       if (new URLSearchParams(window.location.search).get('token')) {
@@ -116,7 +107,7 @@ function getInitialAuth(): AuthTestState {
     } catch {}
   }
   const loggedIn = Boolean(token)
-  return { loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString() }
+  return { loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString(), source }
 }
 
 function SidebarStyles() {
@@ -182,22 +173,11 @@ function SidebarStyles() {
   )
 }
 
-export function SessionItem({
-  session,
-  active,
-  onSelect,
-  onDelete,
-}: {
-  session: Session
-  active: boolean
-  onSelect?: () => void
-  onDelete?: () => void
-}) {
+export function SessionItem({ session, active, onSelect, onDelete }: { session: Session; active: boolean; onSelect?: () => void; onDelete?: () => void }) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(session.title)
   const [menuOpen, setMenuOpen] = useState(false)
   const displayTitle = title || 'Untitled chat'
-
   if (editing) {
     return (
       <input
@@ -205,38 +185,21 @@ export function SessionItem({
         defaultValue={displayTitle}
         autoFocus
         onFocus={(e) => e.target.select()}
-        onBlur={(e) => {
-          if (e.target.value.trim()) setTitle(e.target.value.trim())
-          setEditing(false)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            const v = (e.target as HTMLInputElement).value.trim()
-            if (v) setTitle(v)
-            setEditing(false)
-          }
-          if (e.key === 'Escape') setEditing(false)
-        }}
+        onBlur={(e) => { if (e.target.value.trim()) setTitle(e.target.value.trim()); setEditing(false) }}
+        onKeyDown={(e) => { if (e.key === 'Enter') { const v = (e.target as HTMLInputElement).value.trim(); if (v) setTitle(v); setEditing(false) } if (e.key === 'Escape') setEditing(false) }}
       />
     )
   }
-
   return (
     <div className={active ? 'sk-item sk-item-active' : 'sk-item'} onClick={onSelect}>
       <div className="sk-item-title">{displayTitle}</div>
       <div className="sk-item-action" onClick={(e) => e.stopPropagation()}>
         <div className="sk-menu">
-          <button className="sk-small-btn" aria-label="More" onClick={() => setMenuOpen(!menuOpen)}>
-            <DotsThree size={20} weight="bold" />
-          </button>
+          <button className="sk-small-btn" aria-label="More" onClick={() => setMenuOpen(!menuOpen)}><DotsThree size={20} weight="bold" /></button>
           {menuOpen && (
             <div className="sk-menu-pop">
-              <button className="sk-menu-item" onClick={() => { setMenuOpen(false); setEditing(true) }}>
-                <PencilSimple size={16} /> Rename
-              </button>
-              <button className="sk-menu-item sk-menu-item-danger" onClick={() => { setMenuOpen(false); onDelete?.() }}>
-                <Trash size={16} /> Delete
-              </button>
+              <button className="sk-menu-item" onClick={() => { setMenuOpen(false); setEditing(true) }}><PencilSimple size={16} /> Rename</button>
+              <button className="sk-menu-item sk-menu-item-danger" onClick={() => { setMenuOpen(false); onDelete?.() }}><Trash size={16} /> Delete</button>
             </div>
           )}
         </div>
@@ -245,36 +208,19 @@ export function SessionItem({
   )
 }
 
-export function CollapsedSidebar({
-  onExpand,
-  onNewChat,
-}: {
-  onExpand?: () => void
-  onNewChat?: () => void
-}) {
+export function CollapsedSidebar({ onExpand, onNewChat }: { onExpand?: () => void; onNewChat?: () => void }) {
   return (
     <>
       <SidebarStyles />
       <div style={{ display: 'flex', gap: 8, padding: 12 }}>
-        <button className="sk-icon-btn" title="Expand" onClick={onExpand}>
-          <List size={22} />
-        </button>
-        <button className="sk-icon-btn" title="New chat" onClick={onNewChat}>
-          <Plus size={22} />
-        </button>
+        <button className="sk-icon-btn" title="Expand" onClick={onExpand}><List size={22} /></button>
+        <button className="sk-icon-btn" title="New chat" onClick={onNewChat}><Plus size={22} /></button>
       </div>
     </>
   )
 }
 
-export function Sidebar({
-  sessions,
-  activeId,
-  onSelect,
-  onNewChat,
-  onOpenSettings,
-  onCloseMobile,
-}: SidebarProps) {
+export function Sidebar({ sessions, activeId, onSelect, onNewChat, onOpenSettings, onCloseMobile }: SidebarProps) {
   const [deleting, setDeleting] = useState<Session | null>(null)
   const [deletePending, setDeletePending] = useState(false)
   const [showList, setShowList] = useState(false)
@@ -283,7 +229,7 @@ export function Sidebar({
   const [auth, setAuth] = useState<AuthTestState>(() => getInitialAuth())
 
   const refreshAuth = useCallback(() => {
-    const token = readTokenSync()
+    const { token, source } = readTokenSync()
     if (token && typeof window !== 'undefined') {
       try {
         if (new URLSearchParams(window.location.search).get('token')) {
@@ -293,39 +239,24 @@ export function Sidebar({
       } catch {}
     }
     const loggedIn = Boolean(token)
-    setAuth({ loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString() })
+    setAuth({ loading: false, loggedIn, hasSession: loggedIn, code: token, user: parseUser(token), lastChecked: new Date().toLocaleTimeString(), source })
   }, [])
 
   useEffect(() => {
     refreshAuth()
     const onChanged = () => refreshAuth()
-    const onStorage = () => refreshAuth()
     window.addEventListener('session-changed', onChanged)
-    window.addEventListener('storage', onStorage)
-    return () => {
-      window.removeEventListener('session-changed', onChanged)
-      window.removeEventListener('storage', onStorage)
-    }
+    window.addEventListener('storage', onChanged)
+    return () => { window.removeEventListener('session-changed', onChanged); window.removeEventListener('storage', onChanged) }
   }, [refreshAuth])
 
   const handleLogout = () => {
-    try {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(TOKEN_KEY_2)
-      sessionStorage.removeItem(TOKEN_KEY)
-      sessionStorage.removeItem(TOKEN_KEY_2)
-    } catch {}
-    deleteCookie(COOKIE_KEY)
-    deleteCookie(TOKEN_KEY)
-    deleteCookie(TOKEN_KEY_2)
+    try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY_2); sessionStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY_2) } catch {}
+    deleteCookie(COOKIE_KEY); deleteCookie(TOKEN_KEY); deleteCookie(TOKEN_KEY_2)
     refreshAuth()
   }
 
-  const handleOpenSettings = () => {
-    setShowAuthTest((v) => !v)
-    setShowList(true)
-    onOpenSettings?.()
-  }
+  const handleOpenSettings = () => { setShowAuthTest((v) => !v); setShowList(true); onOpenSettings?.() }
 
   const authTestContent = (
     <div className="sk-auth-test">
@@ -335,9 +266,7 @@ export function Sidebar({
       ) : (
         <>
           <div className="sk-auth-row">
-            <div className="sk-auth-avatar">
-              {auth.user?.avatar ? <img src={auth.user.avatar} alt="" /> : (auth.user?.yourname?.[0]?.toUpperCase() || auth.user?.username?.[0]?.toUpperCase() || '?')}
-            </div>
+            <div className="sk-auth-avatar">{auth.user?.avatar ? <img src={auth.user.avatar} alt="" /> : (auth.user?.yourname?.[0]?.toUpperCase() || auth.user?.username?.[0]?.toUpperCase() || '?')}</div>
             <div style={{ minWidth: 0 }}>
               <div className="sk-auth-name">{auth.user?.yourname || auth.user?.username || (auth.loggedIn ? 'Login (token ke-tangkep)' : 'Belum login')}</div>
               <div className="sk-auth-username">{auth.user ? `@${auth.user.username || '-'}` : '—'}</div>
@@ -345,14 +274,13 @@ export function Sidebar({
           </div>
           <div className="sk-auth-kv"><span>Status</span><span className={auth.loggedIn ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.loggedIn ? 'LOGIN' : 'BELUM LOGIN'}</span></div>
           <div className="sk-auth-kv"><span>Session</span><span className={auth.hasSession ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.hasSession ? 'ADA' : 'KOSONG'}</span></div>
+          <div className="sk-auth-kv"><span>Sumber</span><span>{auth.source}</span></div>
+          <div className="sk-auth-kv"><span>URL saat ini</span><span style={{ fontSize: 10 }}>{typeof window !== 'undefined' ? window.location.href : '-'}</span></div>
           <div className="sk-auth-kv"><span>Token</span><span>{auth.code ? `${auth.code.slice(0, 8)}...${auth.code.slice(-4)}` : '-'}</span></div>
-          <div className="sk-auth-kv"><span>Full Token</span><span style={{ fontSize: 10 }}>{auth.code || '-'}</span></div>
           <div className="sk-auth-kv"><span>ID</span><span>{auth.user?.id || '-'}</span></div>
           <div className="sk-auth-kv"><span>Last check</span><span>{auth.lastChecked}</span></div>
           <button className="sk-btn" style={{ width: '100%', marginTop: 8 }} onClick={refreshAuth}>Cek ulang</button>
-          {auth.loggedIn && (
-            <button className="sk-btn sk-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={handleLogout}>Logout / Hapus Token</button>
-          )}
+          {auth.loggedIn && (<button className="sk-btn sk-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={handleLogout}>Logout / Hapus Token</button>)}
         </>
       )}
     </div>
@@ -363,13 +291,7 @@ export function Sidebar({
       {showAuthTest && authTestContent}
       <div className="sk-section-header">Today</div>
       {sessions.map((session) => (
-        <SessionItem
-          key={session.id}
-          session={session}
-          active={session.id === activeId}
-          onSelect={() => { onSelect?.(session.id); setShowList(false); onCloseMobile?.() }}
-          onDelete={() => setDeleting(session)}
-        />
+        <SessionItem key={session.id} session={session} active={session.id === activeId} onSelect={() => { onSelect?.(session.id); setShowList(false); onCloseMobile?.() }} onDelete={() => setDeleting(session)} />
       ))}
     </>
   )
@@ -380,47 +302,24 @@ export function Sidebar({
       <div className="sk-shell">
         <div className="sk-rail">
           <div className="sk-rail-logo">R</div>
-          <button className="sk-icon-btn" title="New chat" aria-label="New chat" onClick={onNewChat}>
-            <Plus size={24} />
-          </button>
-          <button className={showList ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Chats" aria-label="Chats" onClick={() => setShowList(!showList)}>
-            <ChatCircle size={24} />
-          </button>
+          <button className="sk-icon-btn" title="New chat" aria-label="New chat" onClick={onNewChat}><Plus size={24} /></button>
+          <button className={showList ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Chats" aria-label="Chats" onClick={() => setShowList(!showList)}><ChatCircle size={24} /></button>
           <div className="sk-rail-spacer" />
-          <button className={showAuthTest ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Settings" aria-label="Settings" onClick={handleOpenSettings}>
-            <GearSix size={24} />
-          </button>
+          <button className={showAuthTest ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Settings" aria-label="Settings" onClick={handleOpenSettings}><GearSix size={24} /></button>
         </div>
-
         {showList && <div className="sk-panel">{listContent}</div>}
-
         <div className="sk-bottom">
-          <button className={mobileTab === 'chats' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Chats" onClick={() => { setMobileTab('chats'); setShowList(true) }}>
-            <ChatCircle size={26} />
-          </button>
-          <button className="sk-bottom-plus" aria-label="New chat" onClick={() => { onNewChat?.(); setShowList(false) }}>
-            <Plus size={28} weight="bold" />
-          </button>
-          <button className={mobileTab === 'settings' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Settings" onClick={() => { setMobileTab('settings'); setShowList(false); handleOpenSettings() }}>
-            <GearSix size={26} />
-          </button>
+          <button className={mobileTab === 'chats' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Chats" onClick={() => { setMobileTab('chats'); setShowList(true) }}><ChatCircle size={26} /></button>
+          <button className="sk-bottom-plus" aria-label="New chat" onClick={() => { onNewChat?.(); setShowList(false) }}><Plus size={28} weight="bold" /></button>
+          <button className={mobileTab === 'settings' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Settings" onClick={() => { setMobileTab('settings'); setShowList(false); handleOpenSettings() }}><GearSix size={26} /></button>
         </div>
-
-        {showList && (
-          <>
-            <div className="sk-sheet-mask" onClick={() => setShowList(false)} />
-            <div className="sk-sheet">{listContent}</div>
-          </>
-        )}
+        {showList && (<><div className="sk-sheet-mask" onClick={() => setShowList(false)} /><div className="sk-sheet">{listContent}</div></>)}
       </div>
-
       {deleting ? (
         <div className="sk-modal-mask" onClick={() => { if (!deletePending) setDeleting(null) }}>
           <div className="sk-modal" onClick={(e) => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 8px' }}>Delete session?</h3>
-            <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
-              This will delete “{deleting.title}” and its files. Skeleton only — nothing is really deleted.
-            </p>
+            <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>This will delete “{deleting.title}” and its files. Skeleton only — nothing is really deleted.</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="sk-btn" disabled={deletePending} onClick={() => setDeleting(null)}>Cancel</button>
               <button className="sk-btn sk-btn-danger" disabled={deletePending} onClick={() => { setDeletePending(true); window.setTimeout(() => { setDeletePending(false); setDeleting(null) }, 400) }}>Delete</button>
@@ -432,32 +331,7 @@ export function Sidebar({
   )
 }
 
-export function MobileSidebar({
-  open,
-  sessions,
-  activeId,
-  onSelect,
-  onNewChat,
-  onOpenSettings,
-  onCloseMobile,
-}: {
-  open: boolean
-  sessions: Session[]
-  activeId: string
-  onSelect?: (id: string) => void
-  onNewChat?: () => void
-  onOpenSettings?: () => void
-  onCloseMobile?: () => void
-}) {
+export function MobileSidebar({ open, sessions, activeId, onSelect, onNewChat, onOpenSettings, onCloseMobile }: { open: boolean; sessions: Session[]; activeId: string; onSelect?: (id: string) => void; onNewChat?: () => void; onOpenSettings?: () => void; onCloseMobile?: () => void }) {
   if (!open) return null
-  return (
-    <Sidebar
-      sessions={sessions}
-      activeId={activeId}
-      onSelect={onSelect}
-      onNewChat={onNewChat}
-      onOpenSettings={onOpenSettings}
-      onCloseMobile={onCloseMobile}
-    />
-  )
+  return (<Sidebar sessions={sessions} activeId={activeId} onSelect={onSelect} onNewChat={onNewChat} onOpenSettings={onOpenSettings} onCloseMobile={onCloseMobile} />)
 }
