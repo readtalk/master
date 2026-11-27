@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { REGIONS } from '@/context/Regional'
 
 const AUTH_URL = 'https://auth.readtalk.web.id'
 
@@ -20,16 +21,17 @@ export type UserProfile = {
 function AuthStyles() {
   return (
     <style>{`
-      .sk-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 900; }
-      .sk-modal { background: #111; color: #fff; width: min(420px, 90vw); border-radius: 16px; padding: 18px; box-sizing: border-box; }
-      .sk-btn { border: 1px solid rgba(255,255,255,0.2); background: #1a1a1a; color: #fff; border-radius: 999px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+      .sk-modal-mask { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 900; }
+      .sk-modal { background: #000; color: #fff; width: min(400px, 90vw); padding: 18px; box-sizing: border-box; }
+      .sk-btn { border: 1px solid rgba(255,255,255,0.2); background: #1a1a1a; color: #fff; border-radius: 12px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
       .sk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      .sk-btn-primary { background: #fff; color: #000; border-color: #fff; border-radius: 12px; padding: 12px 16px; font-size: 16px; font-weight: 700; width: 100%; }
+      .sk-btn-primary { background: #fff; color: #000; border-color: #fff; border-radius: 12px; height: 48px; padding: 0 12px; font-size: 16px; font-weight: 700; width: 100%; cursor: pointer; }
       .sk-auth-title { margin: 0 0 8px; font-size: 20px; line-height: 26px; font-weight: 700; text-align: center; }
       .sk-auth-desc { font-size: 12px; line-height: 18px; color: #888; margin: 0 0 16px; text-align: center; }
       .sk-auth-desc a { color: #fff; text-decoration: underline; }
       .sk-auth-label { display: block; font-size: 12px; font-weight: 500; color: #888; margin-bottom: 4px; }
-      .sk-auth-input { box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border-radius: 12px; border: 1px solid #fff; background: #1a1a1a; color: #fff; font: inherit; font-size: 14px; outline: none; }
+      .sk-auth-input { box-sizing: border-box; width: 100%; height: 48px; padding: 0 12px; border-radius: 12px; border: 1px solid #fff; background: #1a1a1a; color: #fff; font: inherit; font-size: 16px; outline: none; }
+      select.sk-auth-input { appearance: none; }
       .sk-auth-field { margin-bottom: 12px; }
       .sk-auth-loading { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; background: #000; color: #fff; }
       .sk-spin { animation: sk-spin 1s linear infinite; }
@@ -58,7 +60,6 @@ function AuthInner() {
       return
     }
 
-    // FIX: token dari URL langsung disimpen, terus URL dibersihin
     const tokenInUrl = searchParams.get('token')
     if (tokenInUrl) {
       localStorage.setItem('session', tokenInUrl)
@@ -77,12 +78,10 @@ function AuthInner() {
     const session = localStorage.getItem('session')
     if (!session) return
     setIsProfileLoading(true)
-    // FIX: domain disamain sama backend baru lu
     fetch(`${AUTH_URL}/settings`, {
       headers: { Authorization: `Bearer ${session}` },
     })
       .then(async (res) => {
-        // FIX: kalo 401, token mati -> hapus session, balik ke login
         if (res.status === 401) {
           localStorage.removeItem('session')
           setIsLoggedIn(false)
@@ -183,7 +182,12 @@ function AuthInner() {
               </div>
               <div className="sk-auth-field">
                 <label className="sk-auth-label">Location</label>
-                <input type="text" value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="e.g. Jakarta" className="sk-auth-input" />
+                <select value={formLocation} onChange={(e) => setFormLocation(e.target.value)} className="sk-auth-input">
+                  <option value="">Select Location</option>
+                  {REGIONS.map((r) => (
+                    <option key={r.code} value={r.code}>{r.nativeName} - {r.label}</option>
+                  ))}
+                </select>
               </div>
               <button onClick={handleSaveProfile} disabled={isSaving || !formUsername.trim() || !formYourname.trim() || !formDob || !formLocation.trim()} className="sk-btn sk-btn-primary" style={{ marginTop: 4 }}>
                 {isSaving ? 'Saving...' : 'Continue'}
