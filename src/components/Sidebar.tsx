@@ -46,15 +46,51 @@ type AuthTestState = {
 
 const TOKEN_KEY = 'sidebar_token'
 const TOKEN_KEY_2 = 'token'
+const COOKIE_KEY = 'readtalk_token'
 
-// --- dibaca SINCRON pas pertama render, bukan di useEffect ---
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  try {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'))
+    return m ? decodeURIComponent(m[1]) : null
+  } catch { return null }
+}
+
+function setCookie(name: string, value: string) {
+  if (typeof document === 'undefined') return
+  try {
+    // 30 hari, kebawa ke semua path, tahan reload + close PWA
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; SameSite=Lax`
+  } catch {}
+}
+
+function deleteCookie(name: string) {
+  if (typeof document === 'undefined') return
+  try { document.cookie = `${name}=; path=/; max-age=0` } catch {}
+}
+
 function readTokenSync(): string | null {
   if (typeof window === 'undefined') return null
   try {
     const fromUrl = new URLSearchParams(window.location.search).get('token')
     if (fromUrl) return fromUrl
   } catch {}
+  // cookie dulu, baru localStorage. kalo localStorage dihapus orang, cookie masih ada.
+  const fromCookie = getCookie(COOKIE_KEY) || getCookie(TOKEN_KEY) || getCookie(TOKEN_KEY_2)
+  if (fromCookie) return fromCookie
   try { return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2) || sessionStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY_2) } catch { return null }
+}
+
+function saveTokenEverywhere(token: string) {
+  try {
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(TOKEN_KEY_2, token)
+    sessionStorage.setItem(TOKEN_KEY, token)
+    sessionStorage.setItem(TOKEN_KEY_2, token)
+  } catch {}
+  setCookie(COOKIE_KEY, token)
+  setCookie(TOKEN_KEY, token)
+  setCookie(TOKEN_KEY_2, token)
 }
 
 function parseUser(token: string | null): AuthTestUser | null {
@@ -71,14 +107,10 @@ function parseUser(token: string | null): AuthTestUser | null {
 
 function getInitialAuth(): AuthTestState {
   const token = readTokenSync()
-  // kalo token masih di URL, langsung simpen biar gak ilang pas render berikutnya
   if (token && typeof window !== 'undefined') {
     try {
       if (new URLSearchParams(window.location.search).get('token')) {
-        localStorage.setItem(TOKEN_KEY, token)
-        localStorage.setItem(TOKEN_KEY_2, token)
-        sessionStorage.setItem(TOKEN_KEY, token)
-        sessionStorage.setItem(TOKEN_KEY_2, token)
+        saveTokenEverywhere(token)
         window.history.replaceState({}, '', window.location.pathname)
       }
     } catch {}
@@ -248,19 +280,14 @@ export function Sidebar({
   const [showList, setShowList] = useState(false)
   const [mobileTab, setMobileTab] = useState('chats')
   const [showAuthTest, setShowAuthTest] = useState(false)
-  // langsung LOGIN dari render pertama, gak nunggu useEffect
   const [auth, setAuth] = useState<AuthTestState>(() => getInitialAuth())
 
   const refreshAuth = useCallback(() => {
     const token = readTokenSync()
     if (token && typeof window !== 'undefined') {
       try {
-        const fromUrl = new URLSearchParams(window.location.search).get('token')
-        if (fromUrl) {
-          localStorage.setItem(TOKEN_KEY, token)
-          localStorage.setItem(TOKEN_KEY_2, token)
-          sessionStorage.setItem(TOKEN_KEY, token)
-          sessionStorage.setItem(TOKEN_KEY_2, token)
+        if (new URLSearchParams(window.location.search).get('token')) {
+          saveTokenEverywhere(token)
           window.history.replaceState({}, '', window.location.pathname)
         }
       } catch {}
@@ -288,6 +315,9 @@ export function Sidebar({
       sessionStorage.removeItem(TOKEN_KEY)
       sessionStorage.removeItem(TOKEN_KEY_2)
     } catch {}
+    deleteCookie(COOKIE_KEY)
+    deleteCookie(TOKEN_KEY)
+    deleteCookie(TOKEN_KEY_2)
     refreshAuth()
   }
 
