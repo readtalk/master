@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import PwaRegister from "@/components/PopAuth";
+import PopAuth from "@/components/PopAuth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
