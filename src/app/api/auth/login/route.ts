@@ -19,7 +19,7 @@ export async function GET() {
     maxAge: 60 * 10,
   });
 
-  const authUrl = new URL("https://auth.readtalk.workers.dev/authorize");
+  const authUrl = new URL("https://auth.readtalk.wwb.id/authorize");
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("client_id", "your-client-id");
   
