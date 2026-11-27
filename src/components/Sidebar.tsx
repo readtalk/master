@@ -28,7 +28,6 @@ export type SidebarProps = {
   onCloseMobile?: () => void
 }
 
-// --- MINIMAL AUTH TEST: bukti token ke-tangkap di Sidebar ---
 type AuthTestUser = {
   id: string
   username?: string
@@ -45,8 +44,8 @@ type AuthTestState = {
   lastChecked: string
 }
 
-// SAMAIN SAMA KEY DI index.ts LU. kalo di index.ts lu namanya beda, ganti ini aja.
 const TOKEN_KEY = 'sidebar_token'
+const TOKEN_KEY_2 = 'token'
 
 function SidebarStyles() {
   return (
@@ -211,23 +210,26 @@ export function Sidebar({
   const [showAuthTest, setShowAuthTest] = useState(false)
   const [auth, setAuth] = useState<AuthTestState>({ loading: true, loggedIn: false, hasSession: false, code: null, user: null, lastChecked: '-' })
 
-  // Sidebar nangkep TOKEN dari callback, bukan code.
-  // Pola: /callback?code=xxx -> callback tuker -> /?token=yyy -> Sidebar simpen -> tampilin -> tahan reload
   const refreshAuth = useCallback(() => {
     setAuth((p) => ({ ...p, loading: true }))
     try {
       const params = new URLSearchParams(window.location.search)
       const tokenFromUrl = params.get('token')
-
       if (tokenFromUrl) {
-        localStorage.setItem(TOKEN_KEY, tokenFromUrl)
+        try {
+          localStorage.setItem(TOKEN_KEY, tokenFromUrl)
+          localStorage.setItem(TOKEN_KEY_2, tokenFromUrl)
+          sessionStorage.setItem(TOKEN_KEY, tokenFromUrl)
+          sessionStorage.setItem(TOKEN_KEY_2, tokenFromUrl)
+        } catch {}
         window.history.replaceState({}, '', window.location.pathname)
       }
-
-      const savedToken = localStorage.getItem(TOKEN_KEY)
+      const savedToken =
+        (() => { try { return localStorage.getItem(TOKEN_KEY) } catch { return null } })() ||
+        (() => { try { return localStorage.getItem(TOKEN_KEY_2) } catch { return null } })() ||
+        (() => { try { return sessionStorage.getItem(TOKEN_KEY) } catch { return null } })() ||
+        (() => { try { return sessionStorage.getItem(TOKEN_KEY_2) } catch { return null } })()
       const loggedIn = Boolean(savedToken)
-
-      // Bongkar id dari token, sama kayak formulasi di index.ts
       let user: AuthTestUser | null = null
       if (savedToken) {
         try {
@@ -238,17 +240,9 @@ export function Sidebar({
           if (id || username) user = { id: String(id), username, yourname }
         } catch {}
       }
-
-      setAuth({
-        loading: false,
-        loggedIn,
-        hasSession: loggedIn,
-        code: savedToken,
-        user,
-        lastChecked: new Date().toLocaleTimeString(),
-      })
+      setAuth({ loading: false, loggedIn, hasSession: loggedIn, code: savedToken, user, lastChecked: new Date().toLocaleTimeString() })
     } catch {
-      const savedToken = (() => { try { return localStorage.getItem(TOKEN_KEY) } catch { return null } })()
+      const savedToken = (() => { try { return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY_2) } catch { return null } })()
       setAuth({ loading: false, loggedIn: Boolean(savedToken), hasSession: Boolean(savedToken), code: savedToken, user: null, lastChecked: new Date().toLocaleTimeString() })
     }
   }, [])
@@ -261,7 +255,12 @@ export function Sidebar({
   }, [refreshAuth])
 
   const handleLogout = () => {
-    try { localStorage.removeItem(TOKEN_KEY) } catch {}
+    try {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(TOKEN_KEY_2)
+      sessionStorage.removeItem(TOKEN_KEY)
+      sessionStorage.removeItem(TOKEN_KEY_2)
+    } catch {}
     refreshAuth()
   }
 
