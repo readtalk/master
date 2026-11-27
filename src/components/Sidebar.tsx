@@ -184,7 +184,7 @@ export function Sidebar({
       <SidebarStyles />
       <div className={mobile ? 'sk-sider sk-sider-mobile' : 'sk-sider'}>
         <div className="sk-top">
-          <div className="sk-app-name">ReadTalk</div>
+          <div className="sk-app-name">RAEDTalk - Demo</div>
           <button className="sk-icon-btn" title="Collapse sidebar" onClick={() => (mobile ? onCloseMobile?.() : onCollapse?.())}>
             <List size={20} />
           </button>
