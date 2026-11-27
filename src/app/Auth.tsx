@@ -70,7 +70,12 @@ function AuthInner() {
       window.history.replaceState({}, '', url.toString())
     }
     const session = localStorage.getItem('session')
-    setIsLoggedIn(!!session)
+    if (tokenInUrl || session) {
+      setIsLoggedIn(true)
+      setIsVisible(true)
+      return
+    }
+    setIsLoggedIn(false)
     setIsVisible(true)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
@@ -161,7 +166,7 @@ function AuthInner() {
 
   if (!isVisible || isLoggedIn === null || isStandalone === null) return null
 
-  if (isLoading || isProfileLoading) {
+  if (isLoading) {
     return (
       <>
         <AuthStyles />
@@ -176,6 +181,19 @@ function AuthInner() {
   }
 
   if (isLoggedIn) {
+    if (isProfileLoading) {
+      return (
+        <>
+          <AuthStyles />
+          <div className="skf-loading">
+            <svg className="skf-spin" width="40" height="40" viewBox="0 0 24 24" fill="none">
+              <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+        </>
+      )
+    }
     if (profile && (!profile.username || !profile.yourname || !profile.date_of_birth || !profile.location)) {
       return (
         <>
