@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import {
+  ChatCircle,
   DotsThree,
   GearSix,
   List,
@@ -30,39 +31,23 @@ export type SidebarProps = {
 function SidebarStyles() {
   return (
     <style>{`
-      .sk-sider { display: flex; flex-direction: column; flex-shrink: 0; box-sizing: border-box; width: 261px; height: 100%; padding: 6px 12px 0; border-right: 1px solid rgba(255,255,255,0.1); background-color: #000; color: #fff; }
-      .sk-sider-mobile { width: 100vw; max-width: 100vw; height: 100dvh; border-right: none; }
-      .sk-sider-mobile .sk-list-wrap { margin-top: 16px; }
-      .sk-sider-mobile .sk-section-header { padding: 4px 10px 3px; font-size: 14px; line-height: 22px; }
-      .sk-sider-mobile .sk-bottom { height: auto; padding: 12px 0; }
-      .sk-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; height: 48px; margin-bottom: 16px; padding: 15px 0 10px 4px; flex-shrink: 0; }
-      .sk-app-name { min-width: 0; padding-left: 4px; overflow: hidden; font-size: 20px; line-height: 22px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: #fff; }
-      .sk-icon-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 8px; background: transparent; color: #fff; cursor: pointer; font-size: 16px; }
+      .sk-shell { display: flex; height: 100%; background: #000; color: #fff; }
+      .sk-rail { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 72px; height: 100%; padding: 12px 0; background: #000; border-right: 1px solid rgba(255,255,255,0.1); }
+      .sk-rail-logo { width: 40px; height: 40px; border-radius: 12px; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; margin-bottom: 12px; }
+      .sk-icon-btn { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border: none; border-radius: 14px; background: transparent; color: #fff; cursor: pointer; }
       .sk-icon-btn:hover { background: #1a1a1a; }
-      .sk-new-chat { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box; width: 100%; height: 40px; padding: 0 16px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.1); background: #1a1a1a; color: #fff; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; user-select: none; box-shadow: none; transition: background 0.3s ease; }
-      .sk-new-chat:hover { background: #262626; box-shadow: none; }
-      .sk-new-chat-icon { display: flex; margin-right: 6px; font-size: 18px; }
-      .sk-list-wrap { position: relative; flex: 1; min-height: 0; margin-top: 24px; }
-      .sk-list { height: 100%; margin: 0 -2px; padding: 0 2px; overflow-y: auto; }
-      .sk-section { position: relative; margin-top: 16px; padding-top: 4px; }
-      .sk-section:first-child { margin-top: 0; }
-      .sk-section-header { position: sticky; top: 0; z-index: 20; padding: 2px 10px; font-size: 12px; line-height: 18px; font-weight: 500; color: #888; background-color: #000; user-select: none; }
-      .sk-bottom { display: flex; flex-shrink: 0; height: 64px; }
-      .sk-settings { display: flex; align-items: center; box-sizing: border-box; width: 100%; margin-block: auto; padding: 6px 2px 6px 6px; border: none; border-radius: 12px; background: none; font: inherit; text-align: left; cursor: pointer; user-select: none; outline: none; color: #fff; }
-      .sk-settings:hover { background-color: #1a1a1a; }
-      .sk-settings-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; color: #fff; font-size: 16px; }
-      .sk-settings-label { min-width: 0; margin-left: 4px; overflow: hidden; font-size: 14px; white-space: nowrap; text-overflow: ellipsis; color: #fff; }
-      .sk-collapsed { position: absolute; top: 0; left: 0; z-index: 20; display: flex; align-items: center; gap: 16px; margin: 12px 0 0 16px; }
-      .sk-collapsed-group { display: flex; align-items: center; gap: 2px; height: 40px; padding: 0 2px; box-sizing: border-box; border-radius: 100px; border: 1px solid rgba(255,255,255,0.15); background: #000; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
-      .sk-drawer-mask { position: absolute; inset: 0; z-index: 799; background: rgba(0,0,0,0.6); }
-      .sk-drawer { position: absolute; top: 0; bottom: 0; left: 0; z-index: 800; width: 100vw; height: 100dvh; }
-      .sk-drawer-full { position: relative; z-index: 1; width: 100vw; height: 100dvh; }
+      .sk-icon-btn-active { background: #1a1a1a; }
+      .sk-rail-spacer { flex: 1; }
+      .sk-panel { width: 260px; height: 100%; background: #000; border-right: 1px solid rgba(255,255,255,0.1); padding: 16px 12px; box-sizing: border-box; overflow-y: auto; }
+      .sk-section-header { padding: 2px 10px 8px; font-size: 12px; line-height: 18px; font-weight: 500; color: #888; }
       .sk-item { position: relative; display: flex; align-items: center; box-sizing: border-box; height: 40px; padding: 6px 6px 6px 10px; border-radius: 12px; font-size: 14px; line-height: 22px; color: #fff; cursor: pointer; }
-      .sk-item-active { background-color: #1a1a1a; color: #fff; }
+      .sk-item-active { background-color: #1a1a1a; }
       .sk-item:hover { background-color: #1a1a1a; }
       .sk-item-title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 18px; }
       .sk-item-action { display: none; flex-shrink: 0; margin-left: 4px; }
       .sk-item:hover .sk-item-action, .sk-item-active .sk-item-action { display: flex; }
+      .sk-small-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 8px; background: transparent; color: #fff; cursor: pointer; }
+      .sk-small-btn:hover { background: #262626; }
       .sk-rename-input { box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border-radius: 12px; border: 1px solid #fff; background: #1a1a1a; color: #fff; font: inherit; font-size: 14px; outline: none; }
       .sk-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 900; }
       .sk-modal { background: #111; color: #fff; width: min(420px, 90vw); border-radius: 16px; padding: 18px; }
@@ -73,8 +58,23 @@ function SidebarStyles() {
       .sk-menu-item { display: flex; align-items: center; gap: 8px; border: none; background: transparent; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; color: #fff; }
       .sk-menu-item:hover { background: #1a1a1a; }
       .sk-menu-item-danger { color: #ff5555; }
+      .sk-bottom { display: none; }
+      .sk-sheet-mask { display: none; }
+      .sk-sheet { display: none; }
+      @media (max-width: 768px) {
+        .sk-shell { display: block; height: auto; }
+        .sk-rail { display: none; }
+        .sk-panel { display: none; }
+        .sk-item { height: 44px; padding: 11px 6px 11px 12px; border-radius: 16px; font-size: 16px; }
+        .sk-rename-input { height: 44px; padding: 0 12px; font-size: 16px; }
+        .sk-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; align-items: center; justify-content: space-around; height: 64px; padding-bottom: env(safe-area-inset-bottom); background: #000; border-top: 1px solid rgba(255,255,255,0.12); }
+        .sk-bottom-btn { border: none; background: transparent; color: #888; display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 14px; cursor: pointer; }
+        .sk-bottom-btn-active { color: #fff; background: #1a1a1a; }
+        .sk-bottom-plus { width: 52px; height: 52px; border-radius: 999px; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; border: none; margin-top: -28px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); cursor: pointer; }
+        .sk-sheet-mask { display: block; position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6); }
+        .sk-sheet { display: block; position: fixed; left: 0; right: 0; bottom: 64px; z-index: 61; max-height: 60dvh; overflow-y: auto; background: #111; color: #fff; border-radius: 20px 20px 0 0; padding: 16px 12px calc(16px + env(safe-area-inset-bottom)); }
+      }
       @media (hover: none) { .sk-item-action { display: flex; } }
-      @media (max-width: 768px) { .sk-item { height: 44px; padding: 11px 6px 11px 12px; border-radius: 16px; font-size: 16px; } .sk-rename-input { height: 44px; padding: 0 12px; font-size: 16px; } }
     `}</style>
   )
 }
@@ -123,7 +123,7 @@ export function SessionItem({
       <div className="sk-item-title">{displayTitle}</div>
       <div className="sk-item-action" onClick={(e) => e.stopPropagation()}>
         <div className="sk-menu">
-          <button className="sk-icon-btn" aria-label="More" onClick={() => setMenuOpen(!menuOpen)}>
+          <button className="sk-small-btn" aria-label="More" onClick={() => setMenuOpen(!menuOpen)}>
             <DotsThree size={20} weight="bold" />
           </button>
           {menuOpen && (
@@ -152,87 +152,100 @@ export function CollapsedSidebar({
   return (
     <>
       <SidebarStyles />
-      <div className="sk-collapsed">
-        <div className="sk-collapsed-group">
-          <button className="sk-icon-btn" title="Expand sidebar" onClick={onExpand}>
-            <List size={20} />
-          </button>
-          <button className="sk-icon-btn" title="New chat" onClick={onNewChat}>
-            <Plus size={20} />
-          </button>
-        </div>
+      <div style={{ display: 'flex', gap: 8, padding: 12 }}>
+        <button className="sk-icon-btn" title="Expand" onClick={onExpand}>
+          <List size={22} />
+        </button>
+        <button className="sk-icon-btn" title="New chat" onClick={onNewChat}>
+          <Plus size={22} />
+        </button>
       </div>
     </>
   )
 }
 
 export function Sidebar({
-  mobile = false,
   sessions,
   activeId,
   onSelect,
   onNewChat,
-  onCollapse,
   onOpenSettings,
   onCloseMobile,
 }: SidebarProps) {
   const [deleting, setDeleting] = useState<Session | null>(null)
   const [deletePending, setDeletePending] = useState(false)
+  const [showList, setShowList] = useState(false)
+  const [mobileTab, setMobileTab] = useState('chats')
+
+  const listContent = (
+    <>
+      <div className="sk-section-header">Today</div>
+      {sessions.map((session) => (
+        <SessionItem
+          key={session.id}
+          session={session}
+          active={session.id === activeId}
+          onSelect={() => { onSelect?.(session.id); setShowList(false); onCloseMobile?.() }}
+          onDelete={() => setDeleting(session)}
+        />
+      ))}
+    </>
+  )
 
   return (
     <>
       <SidebarStyles />
-      <div className={mobile ? 'sk-sider sk-sider-mobile' : 'sk-sider'}>
-        <div className="sk-top">
-          <div className="sk-app-name">RAEDTalk - Demo</div>
-          <button className="sk-icon-btn" title="Collapse sidebar" onClick={() => (mobile ? onCloseMobile?.() : onCollapse?.())}>
-            <List size={20} />
+      <div className="sk-shell">
+        <div className="sk-rail">
+          <div className="sk-rail-logo">R</div>
+          <button className="sk-icon-btn" title="New chat" aria-label="New chat" onClick={onNewChat}>
+            <Plus size={24} />
+          </button>
+          <button className={showList ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Chats" aria-label="Chats" onClick={() => setShowList(!showList)}>
+            <ChatCircle size={24} />
+          </button>
+          <div className="sk-rail-spacer" />
+          <button className="sk-icon-btn" title="Settings" aria-label="Settings" onClick={onOpenSettings}>
+            <GearSix size={24} />
           </button>
         </div>
 
-        <button type="button" className="sk-new-chat" onClick={() => { onNewChat?.(); onCloseMobile?.() }}>
-          <span className="sk-new-chat-icon"><Plus size={18} /></span> New chat
-        </button>
-
-        <div className="sk-list-wrap">
-          <div className="sk-list">
-            <div className="sk-section">
-              <div className="sk-section-header">Today</div>
-              {sessions.map((session) => (
-                <SessionItem
-                  key={session.id}
-                  session={session}
-                  active={session.id === activeId}
-                  onSelect={() => { onSelect?.(session.id); onCloseMobile?.() }}
-                  onDelete={() => setDeleting(session)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        {showList && <div className="sk-panel">{listContent}</div>}
 
         <div className="sk-bottom">
-          <button type="button" className="sk-settings" onClick={onOpenSettings}>
-            <span className="sk-settings-icon"><GearSix size={20} /></span>
-            <span className="sk-settings-label">Settings</span>
+          <button className={mobileTab === 'chats' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Chats" onClick={() => { setMobileTab('chats'); setShowList(true) }}>
+            <ChatCircle size={26} />
+          </button>
+          <button className="sk-bottom-plus" aria-label="New chat" onClick={() => { onNewChat?.(); setShowList(false) }}>
+            <Plus size={28} weight="bold" />
+          </button>
+          <button className={mobileTab === 'settings' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Settings" onClick={() => { setMobileTab('settings'); setShowList(false); onOpenSettings?.() }}>
+            <GearSix size={26} />
           </button>
         </div>
 
-        {deleting ? (
-          <div className="sk-modal-mask" onClick={() => { if (!deletePending) setDeleting(null) }}>
-            <div className="sk-modal" onClick={(e) => e.stopPropagation()}>
-              <h3 style={{ margin: '0 0 8px' }}>Delete session?</h3>
-              <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
-                This will delete “{deleting.title}” and its files. Skeleton only — nothing is really deleted.
-              </p>
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button className="sk-btn" disabled={deletePending} onClick={() => setDeleting(null)}>Cancel</button>
-                <button className="sk-btn sk-btn-danger" disabled={deletePending} onClick={() => { setDeletePending(true); window.setTimeout(() => { setDeletePending(false); setDeleting(null) }, 400) }}>Delete</button>
-              </div>
+        {showList && (
+          <>
+            <div className="sk-sheet-mask" onClick={() => setShowList(false)} />
+            <div className="sk-sheet">{listContent}</div>
+          </>
+        )}
+      </div>
+
+      {deleting ? (
+        <div className="sk-modal-mask" onClick={() => { if (!deletePending) setDeleting(null) }}>
+          <div className="sk-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 8px' }}>Delete session?</h3>
+            <p style={{ fontSize: 14, color: '#888', margin: '0 0 16px' }}>
+              This will delete “{deleting.title}” and its files. Skeleton only — nothing is really deleted.
+            </p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button className="sk-btn" disabled={deletePending} onClick={() => setDeleting(null)}>Cancel</button>
+              <button className="sk-btn sk-btn-danger" disabled={deletePending} onClick={() => { setDeletePending(true); window.setTimeout(() => { setDeletePending(false); setDeleting(null) }, 400) }}>Delete</button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </>
   )
 }
@@ -245,7 +258,6 @@ export function MobileSidebar({
   onNewChat,
   onOpenSettings,
   onCloseMobile,
-  fullscreen = false,
 }: {
   open: boolean
   sessions: Session[]
@@ -254,38 +266,16 @@ export function MobileSidebar({
   onNewChat?: () => void
   onOpenSettings?: () => void
   onCloseMobile?: () => void
-  fullscreen?: boolean
 }) {
   if (!open) return null
-  if (fullscreen) {
-    return (
-      <div className="sk-drawer-full">
-        <Sidebar
-          mobile
-          sessions={sessions}
-          activeId={activeId}
-          onSelect={onSelect}
-          onNewChat={onNewChat}
-          onOpenSettings={onOpenSettings}
-          onCloseMobile={onCloseMobile}
-        />
-      </div>
-    )
-  }
   return (
-    <>
-      <div className="sk-drawer-mask" onClick={onCloseMobile} />
-      <div className="sk-drawer">
-        <Sidebar
-          mobile
-          sessions={sessions}
-          activeId={activeId}
-          onSelect={onSelect}
-          onNewChat={onNewChat}
-          onOpenSettings={onOpenSettings}
-          onCloseMobile={onCloseMobile}
-        />
-      </div>
-    </>
+    <Sidebar
+      sessions={sessions}
+      activeId={activeId}
+      onSelect={onSelect}
+      onNewChat={onNewChat}
+      onOpenSettings={onOpenSettings}
+      onCloseMobile={onCloseMobile}
+    />
   )
 }
