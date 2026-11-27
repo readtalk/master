@@ -1,3 +1,4 @@
+//
 const CACHE = 'readtalk-v1'
 const CORE = ['/', '/manifest']
 
