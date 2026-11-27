@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ChatText, Phone, Heart, Globe, LockKey } from '@phosphor-icons/react/dist/ssr'
 
-type UserProfile = {
+export type UserProfile = {
   username: string | null
   yourname: string | null
   date_of_birth: string | null
@@ -16,40 +16,30 @@ type UserProfile = {
   location: string | null
 }
 
-const REGIONS = [
-  { code: 'id', nativeName: 'Indonesia', label: 'Indonesia' },
-  { code: 'us', nativeName: 'United States', label: 'USA' },
-  { code: 'gb', nativeName: 'United Kingdom', label: 'UK' },
-  { code: 'my', nativeName: 'Malaysia', label: 'Malaysia' },
-  { code: 'sg', nativeName: 'Singapore', label: 'Singapore' },
-  { code: 'jp', nativeName: 'Japan', label: 'Japan' },
-  { code: 'kr', nativeName: 'Korea', label: 'Korea' },
-  { code: 'in', nativeName: 'India', label: 'India' },
-]
-
 function AuthStyles() {
   return (
     <style>{`
-      .sk-auth-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
-      .sk-auth-mask-full { padding: 0; }
-      .sk-auth-modal { background: #111; color: #fff; width: min(420px, 100%); border-radius: 16px; padding: 24px; text-align: center; }
-      .sk-auth-modal-full { width: 100%; height: 100%; border-radius: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-      .sk-auth-title { margin: 0 0 8px; font-size: 20px; line-height: 26px; font-weight: 700; }
-      .sk-auth-desc { font-size: 12px; color: #888; margin: 0 0 24px; line-height: 18px; }
+      .sk-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 900; }
+      .sk-modal { background: #111; color: #fff; width: min(420px, 90vw); border-radius: 16px; padding: 18px; box-sizing: border-box; }
+      .sk-modal-full { width: 100%; height: 100%; border-radius: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+      .sk-btn { border: 1px solid rgba(255,255,255,0.2); background: #1a1a1a; color: #fff; border-radius: 999px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+      .sk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .sk-btn-primary { background: #fff; color: #000; border-color: #fff; border-radius: 12px; padding: 12px 16px; font-size: 16px; font-weight: 700; width: 100%; }
+      .sk-auth-title { margin: 0 0 8px; font-size: 20px; line-height: 26px; font-weight: 700; text-align: center; }
+      .sk-auth-desc { font-size: 12px; line-height: 18px; color: #888; margin: 0 0 16px; text-align: center; }
       .sk-auth-desc a { color: #fff; text-decoration: underline; }
-      .sk-auth-btn { width: 100%; border: 1px solid rgba(255,255,255,0.2); background: #1a1a1a; color: #fff; border-radius: 12px; padding: 12px 16px; font-size: 16px; font-weight: 700; cursor: pointer; }
-      .sk-auth-btn-primary { background: #fff; color: #000; border-color: #fff; }
-      .sk-auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      .sk-auth-label { display: block; font-size: 12px; font-weight: 600; color: #ccc; margin-bottom: 4px; text-align: left; }
-      .sk-auth-input { width: 100%; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; padding: 8px 12px; font-size: 14px; outline: none; box-sizing: border-box; }
-      .sk-auth-input:focus { border-color: #fff; }
-      .sk-auth-field { margin-bottom: 16px; text-align: left; }
+      .sk-auth-label { display: block; font-size: 12px; font-weight: 500; color: #888; margin-bottom: 4px; }
+      .sk-auth-input { box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border-radius: 12px; border: 1px solid #fff; background: #1a1a1a; color: #fff; font: inherit; font-size: 14px; outline: none; }
+      .sk-auth-field { margin-bottom: 12px; }
       .sk-auth-logo-wrap { position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
       .sk-auth-logo { width: 96px; height: 96px; border-radius: 24px; position: absolute; z-index: 10; background: #fff; transition: all 0.5s; }
       .sk-auth-icons { position: absolute; width: 100%; height: 100%; transition: all 0.5s; }
-      .sk-auth-loading { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #000; }
+      .sk-auth-loading { position: fixed; inset: 0; z-index: 900; display: flex; align-items: center; justify-content: center; background: #000; color: #fff; }
       .sk-spin { animation: sk-spin 1s linear infinite; }
       @keyframes sk-spin { to { transform: rotate(360deg); } }
+      @media (max-width: 768px) {
+        .sk-auth-input { height: 44px; padding: 0 12px; font-size: 16px; }
+      }
     `}</style>
   )
 }
@@ -68,7 +58,7 @@ export default function Auth() {
   const [formUsername, setFormUsername] = useState('')
   const [formYourname, setFormYourname] = useState('')
   const [formDob, setFormDob] = useState('')
-  const [formLocation, setFormLocation] = useState('id')
+  const [formLocation, setFormLocation] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -117,7 +107,7 @@ export default function Auth() {
               setFormUsername(data.user.username || '')
               setFormYourname(data.user.yourname || '')
               setFormDob(data.user.date_of_birth || '')
-              setFormLocation(data.user.location || 'id')
+              setFormLocation(data.user.location || '')
             }
           })
           .catch(() => {})
@@ -143,7 +133,7 @@ export default function Auth() {
   }
 
   const handleSaveProfile = async () => {
-    if (!formUsername.trim() || !formYourname.trim() || !formDob || !formLocation) return
+    if (!formUsername.trim() || !formYourname.trim() || !formDob || !formLocation.trim()) return
     const session = localStorage.getItem('session')
     if (!session) return
     setIsSaving(true)
@@ -213,9 +203,9 @@ export default function Auth() {
       return (
         <>
           <AuthStyles />
-          <div className="sk-auth-mask">
-            <div className="sk-auth-modal">
-              <h2 className="sk-auth-title">Complete Your Profile</h2>
+          <div className="sk-modal-mask">
+            <div className="sk-modal">
+              <h3 className="sk-auth-title">Complete Your Profile</h3>
               <p className="sk-auth-desc">Please fill in your details to continue.</p>
               <div className="sk-auth-field">
                 <label className="sk-auth-label">Username</label>
@@ -231,15 +221,9 @@ export default function Auth() {
               </div>
               <div className="sk-auth-field">
                 <label className="sk-auth-label">Location</label>
-                <select value={formLocation} onChange={(e) => setFormLocation(e.target.value)} className="sk-auth-input">
-                  {REGIONS.map((r) => (
-                    <option key={r.code} value={r.code}>
-                      {r.nativeName} - {r.label}
-                    </option>
-                  ))}
-                </select>
+                <input type="text" value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="e.g. Jakarta" className="sk-auth-input" />
               </div>
-              <button onClick={handleSaveProfile} disabled={isSaving || !formUsername.trim() || !formYourname.trim() || !formDob || !formLocation} className="sk-auth-btn sk-auth-btn-primary" style={{ marginTop: 8 }}>
+              <button onClick={handleSaveProfile} disabled={isSaving || !formUsername.trim() || !formYourname.trim() || !formDob || !formLocation.trim()} className="sk-btn sk-btn-primary" style={{ marginTop: 4 }}>
                 {isSaving ? 'Saving...' : 'Continue'}
               </button>
             </div>
@@ -254,13 +238,13 @@ export default function Auth() {
     return (
       <>
         <AuthStyles />
-        <div className="sk-auth-mask">
-          <div className="sk-auth-modal">
-            <button onClick={handleInstallClick} disabled={!deferredPrompt} className="sk-auth-btn sk-auth-btn-primary">
+        <div className="sk-modal-mask">
+          <div className="sk-modal" style={{ textAlign: 'center' }}>
+            <button onClick={handleInstallClick} disabled={!deferredPrompt} className="sk-btn sk-btn-primary">
               INSTALL
             </button>
             <p className="sk-auth-desc" style={{ marginTop: 8 }}>Progressive Web App</p>
-            <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, color: '#aaa' }}>
+            <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, color: '#888' }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0004.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0493L4.841 5.3978a.416.416 0 00-.5677-.1521.416.416 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6891-7.5743-6.1185-9.4396" />
               </svg>
@@ -277,23 +261,23 @@ export default function Auth() {
   return (
     <>
       <AuthStyles />
-      <div className="sk-auth-mask sk-auth-mask-full">
-        <div className="sk-auth-modal sk-auth-modal-full">
+      <div className="sk-modal-mask" style={{ padding: 0 }}>
+        <div className="sk-modal sk-modal-full">
           <div className="sk-auth-logo-wrap">
             <img src="/192x192.png" alt="READTalk Logo" className="sk-auth-logo" style={{ opacity: showLogo ? 1 : 0, transform: showLogo ? 'scale(1)' : 'scale(0.75)' }} />
             <div className="sk-auth-icons" style={{ opacity: !showLogo ? 1 : 0, transform: !showLogo ? 'scale(1)' : 'scale(0.75)' }}>
               <ChatText size={120} weight="fill" style={{ position: 'absolute', top: 24, left: 8, color: '#333', transform: 'rotate(-8deg)' }} />
-              <Phone size={28} weight="fill" style={{ position: 'absolute', top: 8, left: 16, color: '#666', transform: 'rotate(-15deg)' }} />
-              <Heart size={26} weight="fill" style={{ position: 'absolute', bottom: 40, left: 0, color: '#666' }} />
-              <Globe size={50} weight="fill" style={{ position: 'absolute', top: 0, right: 0, color: '#444' }} />
-              <LockKey size={36} weight="fill" style={{ position: 'absolute', bottom: 8, right: 16, color: '#666' }} />
+              <Phone size={28} weight="fill" style={{ position: 'absolute', top: 8, left: 16, color: '#888', transform: 'rotate(-15deg)' }} />
+              <Heart size={26} weight="fill" style={{ position: 'absolute', bottom: 40, left: 0, color: '#888' }} />
+              <Globe size={50} weight="fill" style={{ position: 'absolute', top: 0, right: 0, color: '#333' }} />
+              <LockKey size={36} weight="fill" style={{ position: 'absolute', bottom: 8, right: 16, color: '#888' }} />
             </div>
           </div>
-          <h2 className="sk-auth-title" style={{ marginTop: 16 }}>Welcome to READTalk</h2>
+          <h3 className="sk-auth-title" style={{ marginTop: 16 }}>Welcome to READTalk</h3>
           <p className="sk-auth-desc" style={{ maxWidth: 320 }}>
             By continuing, you agree to our <a href="https://readtalk.web.id/" target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a>
           </p>
-          <button onClick={handleLoginClick} disabled={isLoading} className="sk-auth-btn sk-auth-btn-primary" style={{ maxWidth: 360, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <button onClick={handleLoginClick} disabled={isLoading} className="sk-btn sk-btn-primary" style={{ maxWidth: 360 }}>
             Agree and continue
           </button>
         </div>
