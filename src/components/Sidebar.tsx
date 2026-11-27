@@ -1,7 +1,7 @@
+//
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useState } from 'react'
 import {
   ChatCircle,
   DotsThree,
@@ -27,13 +27,6 @@ export type SidebarProps = {
   onExpand?: () => void
   onOpenSettings?: () => void
   onCloseMobile?: () => void
-}
-
-type User = {
-  name: string
-  username: string
-  avatarUrl?: string
-  email: string
 }
 
 function SidebarStyles() {
@@ -184,39 +177,6 @@ export function Sidebar({
   const [deletePending, setDeletePending] = useState(false)
   const [showList, setShowList] = useState(false)
   const [mobileTab, setMobileTab] = useState('chats')
-  const [user, setUser] = useState<User | null>(null)
-
-  useEffect(() => {
-    async function checkSession() {
-      const session = localStorage.getItem("session")
-      if (!session) {
-        setUser(null)
-        return
-      }
-      try {
-        const payload = JSON.parse(atob(session.split(".")[1]))
-        const email = payload.email as string
-        const res = await fetch("https://auth.readtalk.workers.dev/settings", {
-          headers: { Authorization: `Bearer ${session}` },
-        })
-        const data = await res.json()
-        if (!res.ok || !data.ok) {
-          setUser(null)
-          return
-        }
-        const p = data.profile ?? {}
-        setUser({
-          name: p.name ?? email.split("@")[0],
-          username: p.username ?? email.split("@")[0],
-          avatarUrl: p.avatarUrl,
-          email,
-        })
-      } catch {
-        setUser(null)
-      }
-    }
-    checkSession()
-  }, [])
 
   const listContent = (
     <>
@@ -249,19 +209,6 @@ export function Sidebar({
           <button className="sk-icon-btn" title="Settings" aria-label="Settings" onClick={onOpenSettings}>
             <GearSix size={24} />
           </button>
-          {user ? (
-            <Link href={`/profile/@${user.username}`} className="sk-icon-btn" title={user.name}>
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
-              ) : (
-                <span style={{ fontWeight: 800 }}>{user.name[0]?.toUpperCase()}</span>
-              )}
-            </Link>
-          ) : (
-            <Link href="/api/auth/login" className="sk-icon-btn" title="Login">
-              <span style={{ fontWeight: 800 }}>?</span>
-            </Link>
-          )}
         </div>
 
         {showList && <div className="sk-panel">{listContent}</div>}
@@ -317,7 +264,7 @@ export function MobileSidebar({
   sessions: Session[]
   activeId: string
   onSelect?: (id: string) => void
-  onNewChat?: (id: string) => void
+  onNewChat?: () => void
   onOpenSettings?: () => void
   onCloseMobile?: () => void
 }) {
