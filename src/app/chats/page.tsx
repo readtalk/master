@@ -9,7 +9,7 @@ import {
 import { Sidebar, MobileSidebar } from '../components/Sidebar'
 import { DUMMY_AI_CODE, DUMMY_AI_INTRO, DUMMY_AI_OUTRO, DUMMY_USER_MESSAGE, type Phase } from '../components/lib/chat-types'
 import { highlightCode } from '../components/CodeHighlight'
-import './styles.css'
+import '../styles.css'
 
 export default function Home() {
   
