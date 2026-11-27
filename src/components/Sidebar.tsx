@@ -1,7 +1,6 @@
-//
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   ChatCircle,
   DotsThree,
@@ -27,6 +26,22 @@ export type SidebarProps = {
   onExpand?: () => void
   onOpenSettings?: () => void
   onCloseMobile?: () => void
+}
+
+// --- MINIMAL AUTH TEST: bukti token ke-tangkap di Sidebar ---
+type AuthTestUser = {
+  id: string
+  username?: string
+  yourname?: string
+  avatar?: string | null
+}
+
+type AuthTestState = {
+  loading: boolean
+  loggedIn: boolean
+  hasSession: boolean
+  user: AuthTestUser | null
+  lastChecked: string
 }
 
 function SidebarStyles() {
@@ -62,6 +77,18 @@ function SidebarStyles() {
       .sk-bottom { display: none; }
       .sk-sheet-mask { display: none; }
       .sk-sheet { display: none; }
+      .sk-auth-test { border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px; margin: 0 0 12px; background: #111; }
+      .sk-auth-test-title { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+      .sk-auth-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+      .sk-auth-avatar { width: 36px; height: 36px; border-radius: 999px; background: #262626; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; overflow: hidden; flex-shrink: 0; }
+      .sk-auth-avatar img { width: 100%; height: 100%; object-fit: cover; }
+      .sk-auth-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sk-auth-username { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sk-auth-kv { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+      .sk-auth-kv span:first-child { color: #888; }
+      .sk-auth-kv span:last-child { text-align: right; word-break: break-all; }
+      .sk-auth-ok { color: #4ade80; font-weight: 700; }
+      .sk-auth-fail { color: #ff5555; font-weight: 700; }
       @media (max-width: 768px) {
         .sk-shell { display: block; height: auto; }
         .sk-rail { display: none; }
@@ -177,9 +204,77 @@ export function Sidebar({
   const [deletePending, setDeletePending] = useState(false)
   const [showList, setShowList] = useState(false)
   const [mobileTab, setMobileTab] = useState('chats')
+  const [showAuthTest, setShowAuthTest] = useState(false)
+  const [auth, setAuth] = useState<AuthTestState>({ loading: true, loggedIn: false, hasSession: false, user: null, lastChecked: '-' })
+
+  // Sidebar yang nangkep session, bukan page.tsx
+  // Pola global: token -> simpen -> kenali siapa gue
+  // Pola master: cookie session -> /api/auth/status + /api/auth/me -> kenali siapa gue
+  const refreshAuth = useCallback(async () => {
+    setAuth((p) => ({ ...p, loading: true }))
+    try {
+      const [statusRes, meRes] = await Promise.all([
+        fetch('/api/auth/status', { credentials: 'include' }),
+        fetch('/api/auth/me', { credentials: 'include' }),
+      ])
+      const statusData = await statusRes.json().catch(() => ({})) as { authenticated?: boolean; hasSession?: boolean; user?: AuthTestUser }
+      const meData = await meRes.json().catch(() => ({})) as { success?: boolean; user?: AuthTestUser; authenticated?: boolean }
+      const user = meData.user || statusData.user || null
+      const loggedIn = Boolean(meData.success || meData.authenticated || statusData.authenticated || user)
+      setAuth({
+        loading: false,
+        loggedIn,
+        hasSession: Boolean(statusData.hasSession ?? loggedIn),
+        user,
+        lastChecked: new Date().toLocaleTimeString(),
+      })
+    } catch {
+      setAuth({ loading: false, loggedIn: false, hasSession: false, user: null, lastChecked: new Date().toLocaleTimeString() })
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshAuth()
+    const onChanged = () => refreshAuth()
+    window.addEventListener('session-changed', onChanged)
+    return () => window.removeEventListener('session-changed', onChanged)
+  }, [refreshAuth])
+
+  const handleOpenSettings = () => {
+    setShowAuthTest((v) => !v)
+    setShowList(true)
+    onOpenSettings?.()
+  }
+
+  const authTestContent = (
+    <div className="sk-auth-test">
+      <div className="sk-auth-test-title">Auth Test — Sidebar</div>
+      {auth.loading ? (
+        <div style={{ fontSize: 13, color: '#888' }}>Checking session...</div>
+      ) : (
+        <>
+          <div className="sk-auth-row">
+            <div className="sk-auth-avatar">
+              {auth.user?.avatar ? <img src={auth.user.avatar} alt="" /> : (auth.user?.yourname?.[0]?.toUpperCase() || auth.user?.username?.[0]?.toUpperCase() || '?')}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div className="sk-auth-name">{auth.user?.yourname || auth.user?.username || 'Belum login'}</div>
+              <div className="sk-auth-username">{auth.user ? `@${auth.user.username || '-'}` : '—'}</div>
+            </div>
+          </div>
+          <div className="sk-auth-kv"><span>Status</span><span className={auth.loggedIn ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.loggedIn ? 'LOGIN' : 'BELUM LOGIN'}</span></div>
+          <div className="sk-auth-kv"><span>Session</span><span className={auth.hasSession ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.hasSession ? 'ADA' : 'KOSONG'}</span></div>
+          <div className="sk-auth-kv"><span>ID</span><span>{auth.user?.id || '-'}</span></div>
+          <div className="sk-auth-kv"><span>Last check</span><span>{auth.lastChecked}</span></div>
+          <button className="sk-btn" style={{ width: '100%', marginTop: 8 }} onClick={refreshAuth}>Cek ulang</button>
+        </>
+      )}
+    </div>
+  )
 
   const listContent = (
     <>
+      {showAuthTest && authTestContent}
       <div className="sk-section-header">Today</div>
       {sessions.map((session) => (
         <SessionItem
@@ -206,7 +301,7 @@ export function Sidebar({
             <ChatCircle size={24} />
           </button>
           <div className="sk-rail-spacer" />
-          <button className="sk-icon-btn" title="Settings" aria-label="Settings" onClick={onOpenSettings}>
+          <button className={showAuthTest ? 'sk-icon-btn sk-icon-btn-active' : 'sk-icon-btn'} title="Settings" aria-label="Settings" onClick={handleOpenSettings}>
             <GearSix size={24} />
           </button>
         </div>
@@ -220,7 +315,7 @@ export function Sidebar({
           <button className="sk-bottom-plus" aria-label="New chat" onClick={() => { onNewChat?.(); setShowList(false) }}>
             <Plus size={28} weight="bold" />
           </button>
-          <button className={mobileTab === 'settings' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Settings" onClick={() => { setMobileTab('settings'); setShowList(false); onOpenSettings?.() }}>
+          <button className={mobileTab === 'settings' ? 'sk-bottom-btn sk-bottom-btn-active' : 'sk-bottom-btn'} aria-label="Settings" onClick={() => { setMobileTab('settings'); setShowList(false); handleOpenSettings() }}>
             <GearSix size={26} />
           </button>
         </div>
