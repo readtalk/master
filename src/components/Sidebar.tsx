@@ -28,7 +28,7 @@ export type SidebarProps = {
   onCloseMobile?: () => void
 }
 
-// --- MINIMAL AUTH TEST: bukti token ke-tangkap di Sidebar ---
+// --- MINIMAL AUTH TEST: bukti code OpenAuth ke-tangkap di Sidebar ---
 type AuthTestUser = {
   id: string
   username?: string
@@ -40,9 +40,12 @@ type AuthTestState = {
   loading: boolean
   loggedIn: boolean
   hasSession: boolean
+  code: string | null
   user: AuthTestUser | null
   lastChecked: string
 }
+
+const CODE_KEY = 'sidebar_openAuth_code'
 
 function SidebarStyles() {
   return (
@@ -205,31 +208,34 @@ export function Sidebar({
   const [showList, setShowList] = useState(false)
   const [mobileTab, setMobileTab] = useState('chats')
   const [showAuthTest, setShowAuthTest] = useState(false)
-  const [auth, setAuth] = useState<AuthTestState>({ loading: true, loggedIn: false, hasSession: false, user: null, lastChecked: '-' })
+  const [auth, setAuth] = useState<AuthTestState>({ loading: true, loggedIn: false, hasSession: false, code: null, user: null, lastChecked: '-' })
 
-  // Sidebar yang nangkep session, bukan page.tsx
-  // Pola global: token -> simpen -> kenali siapa gue
-  // Pola master: cookie session -> /api/auth/status + /api/auth/me -> kenali siapa gue
-  const refreshAuth = useCallback(async () => {
+  // Sidebar yang nangkep code OpenAuth, bukan page.tsx
+  // Pola: /callback?code=xxx&state= -> simpen -> tampilin -> tahan reload
+  const refreshAuth = useCallback(() => {
     setAuth((p) => ({ ...p, loading: true }))
     try {
-      const [statusRes, meRes] = await Promise.all([
-        fetch('/api/auth/status', { credentials: 'include' }),
-        fetch('/api/auth/me', { credentials: 'include' }),
-      ])
-      const statusData = await statusRes.json().catch(() => ({})) as { authenticated?: boolean; hasSession?: boolean; user?: AuthTestUser }
-      const meData = await meRes.json().catch(() => ({})) as { success?: boolean; user?: AuthTestUser; authenticated?: boolean }
-      const user = meData.user || statusData.user || null
-      const loggedIn = Boolean(meData.success || meData.authenticated || statusData.authenticated || user)
+      const params = new URLSearchParams(window.location.search)
+      const codeFromUrl = params.get('code')
+
+      if (codeFromUrl) {
+        localStorage.setItem(CODE_KEY, codeFromUrl)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+
+      const savedCode = localStorage.getItem(CODE_KEY)
+      const loggedIn = Boolean(savedCode)
       setAuth({
         loading: false,
         loggedIn,
-        hasSession: Boolean(statusData.hasSession ?? loggedIn),
-        user,
+        hasSession: loggedIn,
+        code: savedCode,
+        user: null,
         lastChecked: new Date().toLocaleTimeString(),
       })
     } catch {
-      setAuth({ loading: false, loggedIn: false, hasSession: false, user: null, lastChecked: new Date().toLocaleTimeString() })
+      const savedCode = (() => { try { return localStorage.getItem(CODE_KEY) } catch { return null } })()
+      setAuth({ loading: false, loggedIn: Boolean(savedCode), hasSession: Boolean(savedCode), code: savedCode, user: null, lastChecked: new Date().toLocaleTimeString() })
     }
   }, [])
 
@@ -239,6 +245,11 @@ export function Sidebar({
     window.addEventListener('session-changed', onChanged)
     return () => window.removeEventListener('session-changed', onChanged)
   }, [refreshAuth])
+
+  const handleLogout = () => {
+    try { localStorage.removeItem(CODE_KEY) } catch {}
+    refreshAuth()
+  }
 
   const handleOpenSettings = () => {
     setShowAuthTest((v) => !v)
@@ -258,15 +269,20 @@ export function Sidebar({
               {auth.user?.avatar ? <img src={auth.user.avatar} alt="" /> : (auth.user?.yourname?.[0]?.toUpperCase() || auth.user?.username?.[0]?.toUpperCase() || '?')}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div className="sk-auth-name">{auth.user?.yourname || auth.user?.username || 'Belum login'}</div>
+              <div className="sk-auth-name">{auth.user?.yourname || auth.user?.username || (auth.loggedIn ? 'Login (code ke-tangkep)' : 'Belum login')}</div>
               <div className="sk-auth-username">{auth.user ? `@${auth.user.username || '-'}` : '—'}</div>
             </div>
           </div>
           <div className="sk-auth-kv"><span>Status</span><span className={auth.loggedIn ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.loggedIn ? 'LOGIN' : 'BELUM LOGIN'}</span></div>
           <div className="sk-auth-kv"><span>Session</span><span className={auth.hasSession ? 'sk-auth-ok' : 'sk-auth-fail'}>{auth.hasSession ? 'ADA' : 'KOSONG'}</span></div>
+          <div className="sk-auth-kv"><span>Code</span><span>{auth.code ? `${auth.code.slice(0, 8)}...${auth.code.slice(-4)}` : '-'}</span></div>
+          <div className="sk-auth-kv"><span>Full Code</span><span style={{ fontSize: 10 }}>{auth.code || '-'}</span></div>
           <div className="sk-auth-kv"><span>ID</span><span>{auth.user?.id || '-'}</span></div>
           <div className="sk-auth-kv"><span>Last check</span><span>{auth.lastChecked}</span></div>
           <button className="sk-btn" style={{ width: '100%', marginTop: 8 }} onClick={refreshAuth}>Cek ulang</button>
+          {auth.loggedIn && (
+            <button className="sk-btn sk-btn-danger" style={{ width: '100%', marginTop: 8 }} onClick={handleLogout}>Logout / Hapus Code</button>
+          )}
         </>
       )}
     </div>
