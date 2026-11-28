@@ -1,9 +1,3 @@
-// src/components/sider/Sider.tsx
-// Skeleton only - Sider UI/UX v2-fixed.
-// Fix from build log: PanelLeft DOES NOT EXIST in @phosphor-icons/react@2.1.10
-// -> replaced with List (already used in page.tsx, proven to build).
-// All other icons in this file passed the build: DotsThree, GearSix, PencilSimple, Plus, Trash.
-// No other logic changed from v1.
 'use client'
 
 import { useState } from 'react'
